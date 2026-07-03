@@ -48,3 +48,6 @@ supabase/functions/.env.*
 # Internal notes
 context.md
 vision-setup.md
+
+# Runtime data
+data/

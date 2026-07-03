@@ -1,0 +1,5 @@
+# BEGIN MACROCALM-WORKOUT-WEEKLY-REVIEW
+# Analyze the previous Madrid training week every Monday at 06:30 Madrid time.
+CRON_TZ=Europe/Madrid
+30 6 * * 1 cd /home/joel/workspace/MacroCalm && /home/joel/workspace/MacroCalm/scripts/workouts/run_weekly_review.sh
+# END MACROCALM-WORKOUT-WEEKLY-REVIEW

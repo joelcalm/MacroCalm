@@ -9,7 +9,9 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:workout-review": "node --test scripts/workouts/*.test.mjs",
+    "workout:review": "node scripts/workouts/run-weekly-review.mjs"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
