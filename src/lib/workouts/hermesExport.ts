@@ -216,6 +216,7 @@ export async function exportWorkoutWeekForHermes(
                     ? setRows.filter((set) => set.session_exercise_log_id === log.id)
                     : [];
 
+                  const actualStatus = effectiveExerciseStatus(log, sets, exercise.planned_sets);
                   return {
                     id: exercise.id,
                     name: exercise.name,
@@ -229,7 +230,7 @@ export async function exportWorkoutWeekForHermes(
                       notes: exercise.notes,
                     },
                     actual: {
-                      status: log?.status ?? "not_started",
+                      status: actualStatus,
                       exerciseType: log?.exercise_type ?? null,
                       plannedName: log?.planned_name ?? null,
                       actualName: log?.actual_name ?? null,
@@ -267,7 +268,7 @@ export async function exportWorkoutWeekForHermes(
                       changeReason: set.change_reason,
                       note: set.note,
                     })),
-                    difference: buildExerciseDifference(exercise, log ?? null, sets),
+                    difference: buildExerciseDifference(exercise, log ?? null, sets, actualStatus),
                   };
                 }),
             }))
@@ -366,11 +367,12 @@ function buildExerciseDifference(
   exercise: WorkoutExercisePlan,
   log: WorkoutExerciseLog | null,
   sets: WorkoutSetLog[] = [],
+  actualStatus = log?.status ?? "not_started",
 ) {
-  if (!log || log.status === "not_started") return null;
-  if (log.status === "skipped") return "Skipped planned exercise.";
-  if (log.status === "partial") return "Marked partial completion.";
-  if (log.status === "substituted")
+  if (!log || actualStatus === "not_started") return null;
+  if (actualStatus === "skipped") return "Skipped planned exercise.";
+  if (actualStatus === "partial") return "Marked partial completion.";
+  if (actualStatus === "substituted")
     return `Substituted with ${log.actual_name ?? "another exercise"}.`;
   if (sets.length && exercise.planned_sets) {
     return `Logged ${sets.filter((set) => !set.skipped).length} of planned ${exercise.planned_sets} sets.`;
@@ -379,4 +381,30 @@ function buildExerciseDifference(
     return `Completed ${log.completed_set_count} of planned ${exercise.planned_sets} sets.`;
   }
   return null;
+}
+
+function effectiveExerciseStatus(
+  log: WorkoutExerciseLog | null,
+  sets: WorkoutSetLog[] = [],
+  plannedSetsText: string | null = null,
+) {
+  if (!log) return "not_started";
+  if (["completed", "partial", "skipped", "substituted"].includes(log.status)) return log.status;
+
+  const completedSets = sets.filter((set) => !set.skipped).length;
+  const completedSetCount = log.completed_set_count ?? completedSets;
+  if (completedSetCount > 0) {
+    const plannedSets = firstNumber(plannedSetsText);
+    if (plannedSets && completedSetCount < plannedSets) return "partial";
+    return "completed";
+  }
+
+  if (sets.some((set) => set.skipped)) return "skipped";
+  if (log.notes || log.actual_name !== log.planned_name) return "partial";
+  return log.status ?? "not_started";
+}
+
+function firstNumber(value: string | null) {
+  const match = String(value ?? "").match(/\d+/);
+  return match ? Number(match[0]) : null;
 }

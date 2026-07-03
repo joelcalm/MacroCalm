@@ -191,6 +191,7 @@ async function exportWorkoutWeek(supabase, userId, weekStartDate) {
                   const sets = log
                     ? workoutSets.filter((set) => set.session_exercise_log_id === log.id)
                     : [];
+                  const actualStatus = effectiveExerciseStatus(log, sets, exercise.planned_sets);
                   return {
                     id: exercise.id,
                     name: exercise.name,
@@ -204,7 +205,7 @@ async function exportWorkoutWeek(supabase, userId, weekStartDate) {
                       notes: exercise.notes,
                     },
                     actual: {
-                      status: log?.status ?? "not_started",
+                      status: actualStatus,
                       exerciseType: log?.exercise_type ?? null,
                       plannedName: log?.planned_name ?? null,
                       actualName: log?.actual_name ?? null,
@@ -262,6 +263,28 @@ async function exportWorkoutWeek(supabase, userId, weekStartDate) {
     },
     raw: { plan, days, blocks, exercises },
   };
+}
+
+function effectiveExerciseStatus(log, sets = [], plannedSetsText = null) {
+  if (!log) return "not_started";
+  if (["completed", "partial", "skipped", "substituted"].includes(log.status)) return log.status;
+
+  const completedSets = sets.filter((set) => !set.skipped).length;
+  const completedSetCount = log.completed_set_count ?? completedSets;
+  if (completedSetCount > 0) {
+    const plannedSets = firstNumber(plannedSetsText);
+    if (plannedSets && completedSetCount < plannedSets) return "partial";
+    return "completed";
+  }
+
+  if (sets.some((set) => set.skipped)) return "skipped";
+  if (log.notes || log.actual_name !== log.planned_name) return "partial";
+  return log.status ?? "not_started";
+}
+
+function firstNumber(value) {
+  const match = String(value ?? "").match(/\d+/);
+  return match ? Number(match[0]) : null;
 }
 
 async function createDraftWorkoutPlan(supabase, raw, review) {
