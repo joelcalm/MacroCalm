@@ -254,49 +254,132 @@ export type Database = {
         Row: {
           actual_duration: string | null;
           actual_load: string | null;
+          actual_name: string | null;
           actual_reps: string | null;
           actual_sets: string | null;
           actual_variation: string | null;
+          change_reason: "fatigue" | "pain" | "time" | "felt_strong" | "equipment" | "other" | null;
           completed_set_count: number | null;
           created_at: string;
+          exercise_type:
+            | "isometric"
+            | "reps"
+            | "assisted"
+            | "accessory"
+            | "cardio"
+            | "notes"
+            | null;
           exercise_plan_id: string;
           id: string;
           notes: string | null;
+          order_index: number | null;
+          planned_name: string | null;
+          rest_target: string | null;
           session_log_id: string;
           set_checklist: Json;
-          status: "not_started" | "completed" | "partial" | "skipped";
+          status:
+            | "not_started"
+            | "in_progress"
+            | "completed"
+            | "partial"
+            | "skipped"
+            | "completed_as_planned"
+            | "completed_modified"
+            | "substituted"
+            | "overperformed";
+          target: Json;
           updated_at: string;
         };
         Insert: {
           actual_duration?: string | null;
           actual_load?: string | null;
+          actual_name?: string | null;
           actual_reps?: string | null;
           actual_sets?: string | null;
           actual_variation?: string | null;
+          change_reason?:
+            | "fatigue"
+            | "pain"
+            | "time"
+            | "felt_strong"
+            | "equipment"
+            | "other"
+            | null;
           completed_set_count?: number | null;
           created_at?: string;
+          exercise_type?:
+            | "isometric"
+            | "reps"
+            | "assisted"
+            | "accessory"
+            | "cardio"
+            | "notes"
+            | null;
           exercise_plan_id: string;
           id?: string;
           notes?: string | null;
+          order_index?: number | null;
+          planned_name?: string | null;
+          rest_target?: string | null;
           session_log_id: string;
           set_checklist?: Json;
-          status?: "not_started" | "completed" | "partial" | "skipped";
+          status?:
+            | "not_started"
+            | "in_progress"
+            | "completed"
+            | "partial"
+            | "skipped"
+            | "completed_as_planned"
+            | "completed_modified"
+            | "substituted"
+            | "overperformed";
+          target?: Json;
           updated_at?: string;
         };
         Update: {
           actual_duration?: string | null;
           actual_load?: string | null;
+          actual_name?: string | null;
           actual_reps?: string | null;
           actual_sets?: string | null;
           actual_variation?: string | null;
+          change_reason?:
+            | "fatigue"
+            | "pain"
+            | "time"
+            | "felt_strong"
+            | "equipment"
+            | "other"
+            | null;
           completed_set_count?: number | null;
           created_at?: string;
+          exercise_type?:
+            | "isometric"
+            | "reps"
+            | "assisted"
+            | "accessory"
+            | "cardio"
+            | "notes"
+            | null;
           exercise_plan_id?: string;
           id?: string;
           notes?: string | null;
+          order_index?: number | null;
+          planned_name?: string | null;
+          rest_target?: string | null;
           session_log_id?: string;
           set_checklist?: Json;
-          status?: "not_started" | "completed" | "partial" | "skipped";
+          status?:
+            | "not_started"
+            | "in_progress"
+            | "completed"
+            | "partial"
+            | "skipped"
+            | "completed_as_planned"
+            | "completed_modified"
+            | "substituted"
+            | "overperformed";
+          target?: Json;
           updated_at?: string;
         };
         Relationships: [
@@ -420,11 +503,22 @@ export type Database = {
           date: string;
           day_plan_id: string;
           duration_minutes: number | null;
+          ended_at: string | null;
+          energy: number | null;
           id: string;
           notes: string | null;
+          pain_flags: Json;
           plan_id: string;
           rpe: number | null;
-          status: "not_started" | "in_progress" | "completed" | "partially_completed" | "skipped";
+          started_at: string | null;
+          status:
+            | "not_started"
+            | "in_progress"
+            | "completed"
+            | "partially_completed"
+            | "modified"
+            | "cut_short"
+            | "skipped";
           updated_at: string;
           user_id: string;
         };
@@ -433,11 +527,22 @@ export type Database = {
           date: string;
           day_plan_id: string;
           duration_minutes?: number | null;
+          ended_at?: string | null;
+          energy?: number | null;
           id?: string;
           notes?: string | null;
+          pain_flags?: Json;
           plan_id: string;
           rpe?: number | null;
-          status?: "not_started" | "in_progress" | "completed" | "partially_completed" | "skipped";
+          started_at?: string | null;
+          status?:
+            | "not_started"
+            | "in_progress"
+            | "completed"
+            | "partially_completed"
+            | "modified"
+            | "cut_short"
+            | "skipped";
           updated_at?: string;
           user_id: string;
         };
@@ -446,11 +551,22 @@ export type Database = {
           date?: string;
           day_plan_id?: string;
           duration_minutes?: number | null;
+          ended_at?: string | null;
+          energy?: number | null;
           id?: string;
           notes?: string | null;
+          pain_flags?: Json;
           plan_id?: string;
           rpe?: number | null;
-          status?: "not_started" | "in_progress" | "completed" | "partially_completed" | "skipped";
+          started_at?: string | null;
+          status?:
+            | "not_started"
+            | "in_progress"
+            | "completed"
+            | "partially_completed"
+            | "modified"
+            | "cut_short"
+            | "skipped";
           updated_at?: string;
           user_id?: string;
         };
@@ -467,6 +583,139 @@ export type Database = {
             columns: ["plan_id"];
             isOneToOne: false;
             referencedRelation: "workout_plans";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      workout_sets: {
+        Row: {
+          assistance: string | null;
+          cardio_distance: string | null;
+          cardio_duration_minutes: number | null;
+          change_reason: "fatigue" | "pain" | "time" | "felt_strong" | "equipment" | "other" | null;
+          created_at: string;
+          id: string;
+          intensity: string | null;
+          load: string | null;
+          note: string | null;
+          planned_target: Json;
+          quality:
+            | "clean"
+            | "okay"
+            | "normal"
+            | "mid"
+            | "bad"
+            | "shaky"
+            | "grindy"
+            | "bad_line"
+            | "technical_fail"
+            | "failed"
+            | "pain"
+            | null;
+          range_of_motion: string | null;
+          reps: number | null;
+          rir: number | null;
+          rpe: number | null;
+          seconds: number | null;
+          session_exercise_log_id: string;
+          set_index: number;
+          skipped: boolean;
+          surface: string | null;
+          updated_at: string;
+          variation: string | null;
+        };
+        Insert: {
+          assistance?: string | null;
+          cardio_distance?: string | null;
+          cardio_duration_minutes?: number | null;
+          change_reason?:
+            | "fatigue"
+            | "pain"
+            | "time"
+            | "felt_strong"
+            | "equipment"
+            | "other"
+            | null;
+          created_at?: string;
+          id?: string;
+          intensity?: string | null;
+          load?: string | null;
+          note?: string | null;
+          planned_target?: Json;
+          quality?:
+            | "clean"
+            | "okay"
+            | "normal"
+            | "mid"
+            | "bad"
+            | "shaky"
+            | "grindy"
+            | "bad_line"
+            | "technical_fail"
+            | "failed"
+            | "pain"
+            | null;
+          range_of_motion?: string | null;
+          reps?: number | null;
+          rir?: number | null;
+          rpe?: number | null;
+          seconds?: number | null;
+          session_exercise_log_id: string;
+          set_index: number;
+          skipped?: boolean;
+          surface?: string | null;
+          updated_at?: string;
+          variation?: string | null;
+        };
+        Update: {
+          assistance?: string | null;
+          cardio_distance?: string | null;
+          cardio_duration_minutes?: number | null;
+          change_reason?:
+            | "fatigue"
+            | "pain"
+            | "time"
+            | "felt_strong"
+            | "equipment"
+            | "other"
+            | null;
+          created_at?: string;
+          id?: string;
+          intensity?: string | null;
+          load?: string | null;
+          note?: string | null;
+          planned_target?: Json;
+          quality?:
+            | "clean"
+            | "okay"
+            | "normal"
+            | "mid"
+            | "bad"
+            | "shaky"
+            | "grindy"
+            | "bad_line"
+            | "technical_fail"
+            | "failed"
+            | "pain"
+            | null;
+          range_of_motion?: string | null;
+          reps?: number | null;
+          rir?: number | null;
+          rpe?: number | null;
+          seconds?: number | null;
+          session_exercise_log_id?: string;
+          set_index?: number;
+          skipped?: boolean;
+          surface?: string | null;
+          updated_at?: string;
+          variation?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workout_sets_session_exercise_log_id_fkey";
+            columns: ["session_exercise_log_id"];
+            isOneToOne: false;
+            referencedRelation: "workout_exercise_logs";
             referencedColumns: ["id"];
           },
         ];

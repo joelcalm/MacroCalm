@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import type { ProductCategory } from "@/lib/productCategories";
 import { STARTER_PRODUCTS } from "@/lib/starterProducts";
 
@@ -65,6 +66,34 @@ export type WeightLog = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type WorkoutSessionLog = Database["public"]["Tables"]["workout_session_logs"]["Row"];
+type WorkoutExerciseLog = Database["public"]["Tables"]["workout_exercise_logs"]["Row"];
+type WorkoutSetLog = Database["public"]["Tables"]["workout_sets"]["Row"];
+type WorkoutDayPlan = Database["public"]["Tables"]["workout_day_plans"]["Row"];
+
+export type WorkoutLogSummary = Pick<
+  WorkoutSessionLog,
+  "id" | "date" | "status" | "duration_minutes" | "rpe" | "energy" | "notes"
+> & {
+  title: string;
+  category: string | null;
+  exercises: Array<
+    Pick<
+      WorkoutExerciseLog,
+      | "id"
+      | "status"
+      | "planned_name"
+      | "actual_name"
+      | "actual_duration"
+      | "actual_reps"
+      | "completed_set_count"
+      | "exercise_type"
+    > & {
+      sets: Pick<WorkoutSetLog, "set_index" | "reps" | "seconds" | "cardio_duration_minutes">[];
+    }
+  >;
 };
 
 /* ---------------- products ---------------- */
@@ -442,6 +471,87 @@ export async function listWeightLogs(startDate: string, endDate: string): Promis
   return (data ?? []) as WeightLog[];
 }
 
+export async function listWorkoutLogSummaries(date: string): Promise<WorkoutLogSummary[]> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) throw new Error("Not signed in");
+
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("workout_session_logs")
+    .select("*")
+    .eq("user_id", u.user.id)
+    .eq("date", date)
+    .order("created_at", { ascending: true });
+  if (sessionsError) throw sessionsError;
+
+  const sessionRows = (sessions ?? []) as WorkoutSessionLog[];
+  const sessionIds = sessionRows.map((session) => session.id);
+  if (!sessionIds.length) return [];
+
+  const { data: exercises, error: exercisesError } = await supabase
+    .from("workout_exercise_logs")
+    .select("*")
+    .in("session_log_id", sessionIds)
+    .order("order_index", { ascending: true });
+  if (exercisesError) throw exercisesError;
+
+  const exerciseRows = (exercises ?? []) as WorkoutExerciseLog[];
+  const exerciseIds = exerciseRows.map((exercise) => exercise.id);
+  const dayIds = Array.from(new Set(sessionRows.map((session) => session.day_plan_id)));
+  let setRows: WorkoutSetLog[] = [];
+  let dayRows: WorkoutDayPlan[] = [];
+
+  if (exerciseIds.length) {
+    const { data: sets, error: setsError } = await supabase
+      .from("workout_sets")
+      .select("*")
+      .in("session_exercise_log_id", exerciseIds)
+      .order("set_index", { ascending: true });
+    if (setsError) throw setsError;
+    setRows = (sets ?? []) as WorkoutSetLog[];
+  }
+
+  if (dayIds.length) {
+    const { data: days, error: daysError } = await supabase
+      .from("workout_day_plans")
+      .select("*")
+      .in("id", dayIds);
+    if (daysError) throw daysError;
+    dayRows = (days ?? []) as WorkoutDayPlan[];
+  }
+
+  return sessionRows.map((session) => ({
+    id: session.id,
+    date: session.date,
+    status: session.status,
+    duration_minutes: session.duration_minutes,
+    rpe: session.rpe,
+    energy: session.energy,
+    notes: session.notes,
+    title: dayRows.find((day) => day.id === session.day_plan_id)?.title ?? "Workout",
+    category: dayRows.find((day) => day.id === session.day_plan_id)?.category ?? null,
+    exercises: exerciseRows
+      .filter((exercise) => exercise.session_log_id === session.id)
+      .map((exercise) => ({
+        id: exercise.id,
+        status: exercise.status,
+        planned_name: exercise.planned_name,
+        actual_name: exercise.actual_name,
+        actual_duration: exercise.actual_duration,
+        actual_reps: exercise.actual_reps,
+        completed_set_count: exercise.completed_set_count,
+        exercise_type: exercise.exercise_type,
+        sets: setRows
+          .filter((set) => set.session_exercise_log_id === exercise.id)
+          .map((set) => ({
+            set_index: set.set_index,
+            reps: set.reps,
+            seconds: set.seconds,
+            cardio_duration_minutes: set.cardio_duration_minutes,
+          })),
+      })),
+  }));
+}
+
 /* ---------------- export ---------------- */
 
 export async function exportAllData() {
@@ -458,6 +568,7 @@ export async function exportAllData() {
     workoutExercisePlans,
     workoutSessionLogs,
     workoutExerciseLogs,
+    workoutSets,
   ] = await Promise.all([
     supabase.from("products").select("*"),
     supabase.from("meal_templates").select("*"),
@@ -471,6 +582,7 @@ export async function exportAllData() {
     supabase.from("workout_exercise_plans").select("*"),
     supabase.from("workout_session_logs").select("*"),
     supabase.from("workout_exercise_logs").select("*"),
+    supabase.from("workout_sets").select("*"),
   ]);
   return {
     products: products.data,
@@ -485,6 +597,7 @@ export async function exportAllData() {
     workout_exercise_plans: workoutExercisePlans.data,
     workout_session_logs: workoutSessionLogs.data,
     workout_exercise_logs: workoutExerciseLogs.data,
+    workout_sets: workoutSets.data,
     exported_at: new Date().toISOString(),
   };
 }

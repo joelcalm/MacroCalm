@@ -142,6 +142,17 @@ async function exportWorkoutWeek(supabase, userId, weekStartDate) {
         "workout exercise logs",
       )
     : [];
+  const exerciseLogIds = exerciseLogs.map((log) => log.id);
+  const workoutSets = exerciseLogIds.length
+    ? await list(
+        supabase
+          .from("workout_sets")
+          .select("*")
+          .in("session_exercise_log_id", exerciseLogIds)
+          .order("set_index", { ascending: true }),
+        "workout sets",
+      )
+    : [];
 
   const summarySessions = weekDates.map(({ dayCode, date }) => {
     const day = days.find((d) => d.day_of_week === dayCode);
@@ -157,6 +168,8 @@ async function exportWorkoutWeek(supabase, userId, weekStartDate) {
       status: sessionLog?.status ?? "not_started",
       durationMinutes: sessionLog?.duration_minutes ?? null,
       rpe: sessionLog?.rpe == null ? null : Number(sessionLog.rpe),
+      energy: sessionLog?.energy ?? null,
+      painFlags: sessionLog?.pain_flags ?? {},
       notes: sessionLog?.notes ?? null,
       blocks: day
         ? blocks
@@ -175,6 +188,9 @@ async function exportWorkoutWeek(supabase, userId, weekStartDate) {
                           item.exercise_plan_id === exercise.id,
                       )
                     : null;
+                  const sets = log
+                    ? workoutSets.filter((set) => set.session_exercise_log_id === log.id)
+                    : [];
                   return {
                     id: exercise.id,
                     name: exercise.name,
@@ -189,6 +205,12 @@ async function exportWorkoutWeek(supabase, userId, weekStartDate) {
                     },
                     actual: {
                       status: log?.status ?? "not_started",
+                      exerciseType: log?.exercise_type ?? null,
+                      plannedName: log?.planned_name ?? null,
+                      actualName: log?.actual_name ?? null,
+                      target: log?.target ?? {},
+                      restTarget: log?.rest_target ?? null,
+                      changeReason: log?.change_reason ?? null,
                       sets: log?.actual_sets ?? null,
                       reps: log?.actual_reps ?? null,
                       duration: log?.actual_duration ?? null,
@@ -198,6 +220,28 @@ async function exportWorkoutWeek(supabase, userId, weekStartDate) {
                       setChecklist: log?.set_checklist ?? [],
                       notes: log?.notes ?? null,
                     },
+                    setLogs: sets.map((set) => ({
+                      setIndex: set.set_index,
+                      variation: set.variation,
+                      surface: set.surface,
+                      reps: set.reps == null ? null : Number(set.reps),
+                      seconds: set.seconds == null ? null : Number(set.seconds),
+                      load: set.load,
+                      assistance: set.assistance,
+                      rangeOfMotion: set.range_of_motion,
+                      cardioDurationMinutes:
+                        set.cardio_duration_minutes == null
+                          ? null
+                          : Number(set.cardio_duration_minutes),
+                      cardioDistance: set.cardio_distance,
+                      intensity: set.intensity,
+                      rpe: set.rpe == null ? null : Number(set.rpe),
+                      rir: set.rir == null ? null : Number(set.rir),
+                      quality: set.quality,
+                      skipped: set.skipped,
+                      changeReason: set.change_reason,
+                      note: set.note,
+                    })),
                   };
                 }),
             }))

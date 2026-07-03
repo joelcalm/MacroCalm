@@ -56,6 +56,7 @@ function SettingsPage() {
       dump("workout_exercise_plans", data.workout_exercise_plans);
       dump("workout_session_logs", data.workout_session_logs);
       dump("workout_exercise_logs", data.workout_exercise_logs);
+      dump("workout_sets", data.workout_sets);
       downloadFile(`macro-export-${Date.now()}.csv`, rows.join("\n"), "text/csv");
     } catch (e: unknown) {
       toast.error(getErrorMessage(e, "Could not export CSV"));

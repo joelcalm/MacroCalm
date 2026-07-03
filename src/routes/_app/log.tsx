@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { DateSelector } from "@/components/DateSelector";
@@ -18,6 +18,7 @@ import {
   deleteDailyLogItem,
   getWeightLog,
   getMealTemplate,
+  listWorkoutLogSummaries,
   listWeightLogs,
   listDailyLogItems,
   listMealTemplates,
@@ -28,10 +29,11 @@ import {
   type MealTemplateItem,
   type Product,
   type WeightLog,
+  type WorkoutLogSummary,
 } from "@/lib/supabaseQueries";
 import { computeMacros, fmtCal, fmtMacro, sumMacros } from "@/lib/nutrition";
 import { getErrorMessage } from "@/lib/utils";
-import { Apple, Plus, Scale, Trash2, UtensilsCrossed } from "lucide-react";
+import { Apple, Dumbbell, Plus, Scale, Trash2, UtensilsCrossed } from "lucide-react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 
@@ -63,6 +65,7 @@ function LogPage() {
   const [selectedWeightInput, setSelectedWeightInput] = useState("");
   const [weightEditorOpen, setWeightEditorOpen] = useState(false);
   const [savingWeight, setSavingWeight] = useState(false);
+  const [workoutSummaries, setWorkoutSummaries] = useState<WorkoutLogSummary[]>([]);
 
   const [pickedProduct, setPickedProduct] = useState<Product | null>(null);
   const [pickedQty, setPickedQty] = useState(100);
@@ -76,10 +79,15 @@ function LogPage() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [list, weight] = await Promise.all([listDailyLogItems(date), getWeightLog(date)]);
+      const [list, weight, workouts] = await Promise.all([
+        listDailyLogItems(date),
+        getWeightLog(date),
+        listWorkoutLogSummaries(date),
+      ]);
       setItems(list);
       setSelectedWeightLog(weight);
       setSelectedWeightInput(weight ? String(Number(weight.weight_kg)) : "");
+      setWorkoutSummaries(workouts);
     } catch (e: unknown) {
       toast.error(getErrorMessage(e, "Could not load log"));
     } finally {
@@ -368,6 +376,8 @@ function LogPage() {
         </div>
       </div>
 
+      <WorkoutSummaryCard summaries={workoutSummaries} loading={loading} />
+
       <div className="mt-6 space-y-4">
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
@@ -555,6 +565,115 @@ function DateField({
   );
 }
 
+function WorkoutSummaryCard({
+  summaries,
+  loading,
+}: {
+  summaries: WorkoutLogSummary[];
+  loading: boolean;
+}) {
+  const activeSummaries = summaries.filter((summary) => summary.status !== "not_started");
+  const primarySummary = activeSummaries[0] ?? summaries[0] ?? null;
+
+  const content = (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Dumbbell className="h-4 w-4 text-primary" />
+          <div>
+            <h2 className="font-semibold">{primarySummary?.title ?? "Workout"}</h2>
+            {primarySummary?.category && (
+              <p className="mt-0.5 text-xs capitalize text-muted-foreground">
+                {primarySummary.category}
+              </p>
+            )}
+          </div>
+        </div>
+        {primarySummary && (
+          <span className="rounded-lg bg-secondary px-2 py-1 text-xs text-muted-foreground">
+            {workoutStatusLabel(primarySummary.status)}
+          </span>
+        )}
+      </div>
+
+      {loading ? (
+        <p className="mt-3 text-sm text-muted-foreground">Loading workout…</p>
+      ) : activeSummaries.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">No workout logged for this day.</p>
+      ) : (
+        <div className="mt-3 space-y-3">
+          {activeSummaries.map((summary) => {
+            const performed = summary.exercises.filter((exercise) =>
+              [
+                "partial",
+                "completed",
+                "completed_as_planned",
+                "completed_modified",
+                "substituted",
+                "overperformed",
+              ].includes(exercise.status),
+            );
+            const skipped = summary.exercises.filter((exercise) => exercise.status === "skipped");
+            const topLines = performed.slice(0, 4);
+            return (
+              <div key={summary.id}>
+                <p className="text-xs text-muted-foreground">
+                  {[
+                    summary.duration_minutes == null ? null : `${summary.duration_minutes} min`,
+                    summary.rpe == null ? null : `RPE ${Number(summary.rpe)}`,
+                    summary.energy == null ? null : `Energy ${summary.energy}/5`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Workout logged"}
+                </p>
+                {topLines.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {topLines.map((exercise) => (
+                      <p key={exercise.id} className="text-sm">
+                        <span className="font-medium">
+                          {exercise.actual_name || exercise.planned_name || "Exercise"}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          · {compactWorkoutExerciseLine(exercise)}
+                        </span>
+                      </p>
+                    ))}
+                  </div>
+                )}
+                {(performed.length > topLines.length || skipped.length > 0) && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {performed.length > topLines.length
+                      ? `+${performed.length - topLines.length} more`
+                      : ""}
+                    {performed.length > topLines.length && skipped.length > 0 ? " · " : ""}
+                    {skipped.length > 0 ? `${skipped.length} skipped` : ""}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+
+  if (!primarySummary) {
+    return <div className="mt-6 rounded-2xl border border-border bg-card p-4">{content}</div>;
+  }
+
+  return (
+    <Link
+      to="/workout"
+      search={{ date: primarySummary.date }}
+      className="mt-6 block rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/50"
+    >
+      {content}
+      <p className="mt-3 text-xs font-medium text-primary">Open workout</p>
+    </Link>
+  );
+}
+
 function rangeButtonClass(active: boolean) {
   return [
     "h-10 rounded-xl text-sm font-medium transition-colors",
@@ -579,4 +698,29 @@ function formatShortDate(value: string) {
     month: "short",
     day: "numeric",
   });
+}
+
+function workoutStatusLabel(status: string) {
+  return status.replace("completed_as_planned", "completed").replace(/_/g, " ");
+}
+
+function compactWorkoutExerciseLine(exercise: WorkoutLogSummary["exercises"][number]) {
+  const performedSets = exercise.sets.filter(
+    (set) => set.reps != null || set.seconds != null || set.cardio_duration_minutes != null,
+  );
+  const count = performedSets.length || exercise.completed_set_count || 0;
+  const values = performedSets
+    .slice(0, 5)
+    .map((set) => {
+      if (set.seconds != null) return `${Number(set.seconds)}s`;
+      if (set.reps != null) return `${Number(set.reps)} reps`;
+      if (set.cardio_duration_minutes != null) return `${Number(set.cardio_duration_minutes)} min`;
+      return null;
+    })
+    .filter(Boolean);
+
+  if (values.length) return `${count} sets: ${values.join(", ")}`;
+  if (exercise.actual_duration) return exercise.actual_duration;
+  if (exercise.actual_reps) return `${count || ""} sets ${exercise.actual_reps}`.trim();
+  return workoutStatusLabel(exercise.status);
 }

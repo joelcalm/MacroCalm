@@ -8,6 +8,7 @@ type WorkoutBlock = Database["public"]["Tables"]["workout_blocks"]["Row"];
 type WorkoutExercisePlan = Database["public"]["Tables"]["workout_exercise_plans"]["Row"];
 type WorkoutSessionLog = Database["public"]["Tables"]["workout_session_logs"]["Row"];
 type WorkoutExerciseLog = Database["public"]["Tables"]["workout_exercise_logs"]["Row"];
+type WorkoutSetLog = Database["public"]["Tables"]["workout_sets"]["Row"];
 
 export type WorkoutWeekHermesSummary = {
   exportedAt: string;
@@ -30,6 +31,8 @@ export type WorkoutWeekHermesSummary = {
     status: string;
     durationMinutes: number | null;
     rpe: number | null;
+    energy: number | null;
+    painFlags: unknown;
     notes: string | null;
     blocks: Array<{
       title: string;
@@ -49,6 +52,12 @@ export type WorkoutWeekHermesSummary = {
         };
         actual: {
           status: string;
+          exerciseType: string | null;
+          plannedName: string | null;
+          actualName: string | null;
+          target: unknown;
+          restTarget: string | null;
+          changeReason: string | null;
           sets: string | null;
           reps: string | null;
           duration: string | null;
@@ -58,6 +67,25 @@ export type WorkoutWeekHermesSummary = {
           setChecklist: unknown;
           notes: string | null;
         };
+        setLogs: Array<{
+          setIndex: number;
+          variation: string | null;
+          surface: string | null;
+          reps: number | null;
+          seconds: number | null;
+          load: string | null;
+          assistance: string | null;
+          rangeOfMotion: string | null;
+          cardioDurationMinutes: number | null;
+          cardioDistance: string | null;
+          intensity: string | null;
+          rpe: number | null;
+          rir: number | null;
+          quality: string | null;
+          skipped: boolean;
+          changeReason: string | null;
+          note: string | null;
+        }>;
         difference: string | null;
       }>;
     }>;
@@ -128,6 +156,7 @@ export async function exportWorkoutWeekForHermes(
   const sessionIds = sessionRows.map((session) => session.id);
 
   let exerciseLogRows: WorkoutExerciseLog[] = [];
+  let setRows: WorkoutSetLog[] = [];
   if (sessionIds.length) {
     const { data: exerciseLogs, error: exerciseLogsError } = await supabaseAdmin
       .from("workout_exercise_logs")
@@ -135,6 +164,17 @@ export async function exportWorkoutWeekForHermes(
       .in("session_log_id", sessionIds);
     if (exerciseLogsError) throw exerciseLogsError;
     exerciseLogRows = (exerciseLogs ?? []) as WorkoutExerciseLog[];
+  }
+
+  const exerciseLogIds = exerciseLogRows.map((log) => log.id);
+  if (exerciseLogIds.length) {
+    const { data: workoutSets, error: workoutSetsError } = await supabaseAdmin
+      .from("workout_sets")
+      .select("*")
+      .in("session_exercise_log_id", exerciseLogIds)
+      .order("set_index", { ascending: true });
+    if (workoutSetsError) throw workoutSetsError;
+    setRows = (workoutSets ?? []) as WorkoutSetLog[];
   }
 
   const sessionsForExport = weekDates.map(({ dayCode, date }) => {
@@ -152,6 +192,8 @@ export async function exportWorkoutWeekForHermes(
       status: sessionLog?.status ?? "not_started",
       durationMinutes: sessionLog?.duration_minutes ?? null,
       rpe: sessionLog?.rpe == null ? null : Number(sessionLog.rpe),
+      energy: sessionLog?.energy ?? null,
+      painFlags: sessionLog?.pain_flags ?? {},
       notes: sessionLog?.notes ?? null,
       blocks: day
         ? blockRows
@@ -170,6 +212,9 @@ export async function exportWorkoutWeekForHermes(
                           item.exercise_plan_id === exercise.id,
                       )
                     : null;
+                  const sets = log
+                    ? setRows.filter((set) => set.session_exercise_log_id === log.id)
+                    : [];
 
                   return {
                     id: exercise.id,
@@ -185,6 +230,12 @@ export async function exportWorkoutWeekForHermes(
                     },
                     actual: {
                       status: log?.status ?? "not_started",
+                      exerciseType: log?.exercise_type ?? null,
+                      plannedName: log?.planned_name ?? null,
+                      actualName: log?.actual_name ?? null,
+                      target: log?.target ?? {},
+                      restTarget: log?.rest_target ?? null,
+                      changeReason: log?.change_reason ?? null,
                       sets: log?.actual_sets ?? null,
                       reps: log?.actual_reps ?? null,
                       duration: log?.actual_duration ?? null,
@@ -194,7 +245,29 @@ export async function exportWorkoutWeekForHermes(
                       setChecklist: log?.set_checklist ?? [],
                       notes: log?.notes ?? null,
                     },
-                    difference: buildExerciseDifference(exercise, log ?? null),
+                    setLogs: sets.map((set) => ({
+                      setIndex: set.set_index,
+                      variation: set.variation,
+                      surface: set.surface,
+                      reps: set.reps == null ? null : Number(set.reps),
+                      seconds: set.seconds == null ? null : Number(set.seconds),
+                      load: set.load,
+                      assistance: set.assistance,
+                      rangeOfMotion: set.range_of_motion,
+                      cardioDurationMinutes:
+                        set.cardio_duration_minutes == null
+                          ? null
+                          : Number(set.cardio_duration_minutes),
+                      cardioDistance: set.cardio_distance,
+                      intensity: set.intensity,
+                      rpe: set.rpe == null ? null : Number(set.rpe),
+                      rir: set.rir == null ? null : Number(set.rir),
+                      quality: set.quality,
+                      skipped: set.skipped,
+                      changeReason: set.change_reason,
+                      note: set.note,
+                    })),
+                    difference: buildExerciseDifference(exercise, log ?? null, sets),
                   };
                 }),
             }))
@@ -260,6 +333,25 @@ export function formatWorkoutWeekForHermesMarkdown(summary: WorkoutWeekHermesSum
           .filter(Boolean)
           .join(", ");
         lines.push(`- ${exercise.name}: ${actual || "not logged"}`);
+        if (exercise.setLogs.length) {
+          const sets = exercise.setLogs
+            .map((set) =>
+              [
+                `set ${set.setIndex}`,
+                set.variation,
+                set.surface ?? set.assistance ?? set.load,
+                set.seconds == null ? null : `${set.seconds}s`,
+                set.reps == null ? null : `${set.reps} reps`,
+                set.cardioDurationMinutes == null ? null : `${set.cardioDurationMinutes} min`,
+                set.quality,
+                set.changeReason,
+              ]
+                .filter(Boolean)
+                .join(" / "),
+            )
+            .join("; ");
+          lines.push(`  Sets: ${sets}`);
+        }
         if (exercise.actual.notes) lines.push(`  Note: ${exercise.actual.notes}`);
       }
     }
@@ -270,10 +362,19 @@ export function formatWorkoutWeekForHermesMarkdown(summary: WorkoutWeekHermesSum
   return lines.join("\n");
 }
 
-function buildExerciseDifference(exercise: WorkoutExercisePlan, log: WorkoutExerciseLog | null) {
+function buildExerciseDifference(
+  exercise: WorkoutExercisePlan,
+  log: WorkoutExerciseLog | null,
+  sets: WorkoutSetLog[] = [],
+) {
   if (!log || log.status === "not_started") return null;
   if (log.status === "skipped") return "Skipped planned exercise.";
   if (log.status === "partial") return "Marked partial completion.";
+  if (log.status === "substituted")
+    return `Substituted with ${log.actual_name ?? "another exercise"}.`;
+  if (sets.length && exercise.planned_sets) {
+    return `Logged ${sets.filter((set) => !set.skipped).length} of planned ${exercise.planned_sets} sets.`;
+  }
   if (log.completed_set_count != null && exercise.planned_sets) {
     return `Completed ${log.completed_set_count} of planned ${exercise.planned_sets} sets.`;
   }
