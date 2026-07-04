@@ -554,6 +554,152 @@ export async function listWorkoutLogSummaries(date: string): Promise<WorkoutLogS
 
 /* ---------------- export ---------------- */
 
+export async function exportWorkoutRange(startDate: string, endDate: string) {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) throw new Error("Not signed in");
+
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("workout_session_logs")
+    .select("*")
+    .eq("user_id", u.user.id)
+    .gte("date", startDate)
+    .lte("date", endDate)
+    .order("date", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (sessionsError) throw sessionsError;
+
+  const sessionRows = (sessions ?? []) as WorkoutSessionLog[];
+  const sessionIds = sessionRows.map((session) => session.id);
+  const dayIds = Array.from(new Set(sessionRows.map((session) => session.day_plan_id)));
+  let exerciseRows: WorkoutExerciseLog[] = [];
+  let setRows: WorkoutSetLog[] = [];
+  let dayRows: WorkoutDayPlan[] = [];
+
+  if (sessionIds.length) {
+    const { data: exercises, error: exercisesError } = await supabase
+      .from("workout_exercise_logs")
+      .select("*")
+      .in("session_log_id", sessionIds)
+      .order("order_index", { ascending: true });
+    if (exercisesError) throw exercisesError;
+    exerciseRows = (exercises ?? []) as WorkoutExerciseLog[];
+  }
+
+  const exerciseIds = exerciseRows.map((exercise) => exercise.id);
+  if (exerciseIds.length) {
+    const { data: sets, error: setsError } = await supabase
+      .from("workout_sets")
+      .select("*")
+      .in("session_exercise_log_id", exerciseIds)
+      .order("set_index", { ascending: true });
+    if (setsError) throw setsError;
+    setRows = (sets ?? []) as WorkoutSetLog[];
+  }
+
+  if (dayIds.length) {
+    const { data: days, error: daysError } = await supabase
+      .from("workout_day_plans")
+      .select("*")
+      .in("id", dayIds);
+    if (daysError) throw daysError;
+    dayRows = (days ?? []) as WorkoutDayPlan[];
+  }
+
+  return {
+    exported_at: new Date().toISOString(),
+    range: { start_date: startDate, end_date: endDate },
+    workout_session_logs: sessionRows.map((session) => ({
+      ...session,
+      day_plan: dayRows.find((day) => day.id === session.day_plan_id) ?? null,
+      exercise_logs: exerciseRows
+        .filter((exercise) => exercise.session_log_id === session.id)
+        .map((exercise) => ({
+          ...exercise,
+          sets: setRows.filter((set) => set.session_exercise_log_id === exercise.id),
+        })),
+    })),
+  };
+}
+
+export async function exportFoodLogRange(startDate: string, endDate: string) {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) throw new Error("Not signed in");
+
+  const { data: logs, error: logsError } = await supabase
+    .from("daily_logs")
+    .select("*")
+    .eq("user_id", u.user.id)
+    .gte("date", startDate)
+    .lte("date", endDate)
+    .order("date", { ascending: true });
+  if (logsError) throw logsError;
+
+  const logRows = (logs ?? []) as DailyLog[];
+  const logIds = logRows.map((log) => log.id);
+  let itemRows: DailyLogItem[] = [];
+
+  if (logIds.length) {
+    const { data: items, error: itemsError } = await supabase
+      .from("daily_log_items")
+      .select("*, product:products(*)")
+      .in("daily_log_id", logIds)
+      .order("created_at", { ascending: true });
+    if (itemsError) throw itemsError;
+    itemRows = (items ?? []) as DailyLogItem[];
+  }
+
+  return {
+    exported_at: new Date().toISOString(),
+    range: { start_date: startDate, end_date: endDate },
+    daily_logs: logRows.map((log) => ({
+      ...log,
+      items: itemRows.filter((item) => item.daily_log_id === log.id),
+    })),
+  };
+}
+
+export async function exportStoredFoodLibrary() {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) throw new Error("Not signed in");
+
+  const { data: products, error: productsError } = await supabase
+    .from("products")
+    .select("*")
+    .eq("user_id", u.user.id)
+    .order("category", { ascending: true })
+    .order("name", { ascending: true });
+  if (productsError) throw productsError;
+
+  const { data: templates, error: templatesError } = await supabase
+    .from("meal_templates")
+    .select("*")
+    .eq("user_id", u.user.id)
+    .order("created_at", { ascending: false });
+  if (templatesError) throw templatesError;
+
+  const templateRows = (templates ?? []) as MealTemplate[];
+  const templateIds = templateRows.map((template) => template.id);
+  let itemRows: MealTemplateItem[] = [];
+
+  if (templateIds.length) {
+    const { data: items, error: itemsError } = await supabase
+      .from("meal_template_items")
+      .select("*, product:products(*)")
+      .in("meal_template_id", templateIds);
+    if (itemsError) throw itemsError;
+    itemRows = (items ?? []) as MealTemplateItem[];
+  }
+
+  return {
+    exported_at: new Date().toISOString(),
+    products: products ?? [],
+    meal_templates: templateRows.map((template) => ({
+      ...template,
+      items: itemRows.filter((item) => item.meal_template_id === template.id),
+    })),
+  };
+}
+
 export async function exportAllData() {
   const [
     products,

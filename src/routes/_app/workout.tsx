@@ -233,14 +233,31 @@ function WorkoutPage() {
     const finalSessionStatus = sessionDraft.statusOverride || calculatedSessionStatus;
     setSaving(true);
     try {
+      const durationMinutes = parseOptionalNumber(sessionDraft.durationMinutes, {
+        label: "Minutes",
+        min: 0,
+        integer: true,
+      });
+      const rpe = parseOptionalNumber(sessionDraft.rpe, {
+        label: "Workout RPE",
+        min: 1,
+        max: 10,
+      });
+      const energy = parseOptionalNumber(sessionDraft.energy, {
+        label: "Energy",
+        min: 1,
+        max: 5,
+        integer: true,
+      });
+
       await saveWorkoutSession({
         date,
         planId: data.plan.id,
         dayPlanId: selectedDay.id,
         status: finalSessionStatus,
-        durationMinutes: parseOptionalNumber(sessionDraft.durationMinutes),
-        rpe: parseOptionalNumber(sessionDraft.rpe),
-        energy: parseOptionalNumber(sessionDraft.energy),
+        durationMinutes,
+        rpe,
+        energy,
         painFlags: sessionDraft.painFlags as Json,
         notes: sessionDraft.notes,
         exerciseLogs: selectedDay.blocks.flatMap((block) =>
@@ -260,7 +277,9 @@ function WorkoutPage() {
               status,
               changeReason: draft.changeReason || null,
               notes: draft.notes,
-              sets: draft.sets.map((set, index) => toSaveSet(set, index + 1, target)),
+              sets: draft.sets.map((set, index) =>
+                toSaveSet(set, index + 1, target, exercise.name),
+              ),
             };
           }),
         ),
@@ -1269,22 +1288,44 @@ function getDraftExerciseStatus(exercise: WorkoutExercisePlanWithLog, draft: Exe
   });
 }
 
-function toSaveSet(set: SetDraft, setIndex: number, target: WorkoutTarget): SaveWorkoutSetInput {
+function toSaveSet(
+  set: SetDraft,
+  setIndex: number,
+  target: WorkoutTarget,
+  exerciseName?: string,
+): SaveWorkoutSetInput {
+  const labelPrefix = exerciseName ? `${exerciseName}, set ${setIndex}` : null;
+
   return {
     setIndex,
     plannedTarget: target as Json,
     variation: set.variation,
     surface: set.surface,
-    reps: parseOptionalNumber(set.reps),
-    seconds: parseOptionalNumber(set.seconds),
+    reps: parseOptionalNumber(
+      set.reps,
+      labelPrefix ? { label: `${labelPrefix} reps`, min: 0 } : undefined,
+    ),
+    seconds: parseOptionalNumber(
+      set.seconds,
+      labelPrefix ? { label: `${labelPrefix} seconds`, min: 0 } : undefined,
+    ),
     load: set.load,
     assistance: set.assistance,
     rangeOfMotion: set.rangeOfMotion,
-    cardioDurationMinutes: parseOptionalNumber(set.cardioDurationMinutes),
+    cardioDurationMinutes: parseOptionalNumber(
+      set.cardioDurationMinutes,
+      labelPrefix ? { label: `${labelPrefix} cardio minutes`, min: 0 } : undefined,
+    ),
     cardioDistance: set.cardioDistance,
     intensity: set.intensity,
-    rpe: parseOptionalNumber(set.rpe),
-    rir: parseOptionalNumber(set.rir),
+    rpe: parseOptionalNumber(
+      set.rpe,
+      labelPrefix ? { label: `${labelPrefix} RPE`, min: 1, max: 10 } : undefined,
+    ),
+    rir: parseOptionalNumber(
+      set.rir,
+      labelPrefix ? { label: `${labelPrefix} RIR`, min: 0 } : undefined,
+    ),
     quality: set.quality || null,
     skipped: set.skipped,
     changeReason: set.changeReason || null,
@@ -1377,11 +1418,28 @@ function compactBlockSummary(title: string, notes: string | null) {
   return `${title}: ${compactNotes}`;
 }
 
-function parseOptionalNumber(value: string) {
+function parseOptionalNumber(
+  value: string,
+  rules?: { label: string; min?: number; max?: number; integer?: boolean },
+) {
   const trimmed = value.trim().replace(",", ".");
   if (!trimmed) return null;
   const number = Number(trimmed);
-  return Number.isFinite(number) ? number : null;
+  if (!Number.isFinite(number)) {
+    if (!rules) return null;
+    throw new Error(`${rules.label} must be a number`);
+  }
+  if (!rules) return number;
+  if (rules.integer && !Number.isInteger(number)) {
+    throw new Error(`${rules.label} must be a whole number`);
+  }
+  if (rules.min != null && number < rules.min) {
+    throw new Error(`${rules.label} must be at least ${rules.min}`);
+  }
+  if (rules.max != null && number > rules.max) {
+    throw new Error(`${rules.label} must be ${rules.max} or less`);
+  }
+  return number;
 }
 
 function isDateValue(value: string) {

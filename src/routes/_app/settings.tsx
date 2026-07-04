@@ -1,10 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { exportAllData } from "@/lib/supabaseQueries";
+import {
+  exportFoodLogRange,
+  exportStoredFoodLibrary,
+  exportWorkoutRange,
+} from "@/lib/supabaseQueries";
 import { getErrorMessage } from "@/lib/utils";
-import { Download, FileJson, Info, LogOut } from "lucide-react";
+import { Download, Info, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/settings")({
@@ -14,52 +19,58 @@ export const Route = createFileRoute("/_app/settings")({
 function SettingsPage() {
   const { user } = useAuth();
   const nav = useNavigate();
+  const [workoutStartDate, setWorkoutStartDate] = useState(() => daysAgo(30));
+  const [workoutEndDate, setWorkoutEndDate] = useState(() => todayString());
+  const [foodStartDate, setFoodStartDate] = useState(() => daysAgo(30));
+  const [foodEndDate, setFoodEndDate] = useState(() => todayString());
+  const [exporting, setExporting] = useState<"workouts" | "foodLog" | "library" | null>(null);
 
   async function logout() {
     await supabase.auth.signOut();
     nav({ to: "/login" });
   }
 
-  async function exportJson() {
+  async function exportWorkouts() {
+    if (!validateDateRange(workoutStartDate, workoutEndDate)) return;
+
+    setExporting("workouts");
     try {
-      const data = await exportAllData();
-      downloadFile(
-        `macro-export-${Date.now()}.json`,
-        JSON.stringify(data, null, 2),
-        "application/json",
-      );
-    } catch (e: unknown) {
-      toast.error(getErrorMessage(e, "Could not export JSON"));
+      const data = await exportWorkoutRange(workoutStartDate, workoutEndDate);
+      downloadJson(`macrocalm-workouts-${workoutStartDate}-to-${workoutEndDate}.json`, data);
+      toast.success("Workout export downloaded");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Could not export workouts"));
+    } finally {
+      setExporting(null);
     }
   }
 
-  async function exportCsv() {
+  async function exportFoodLog() {
+    if (!validateDateRange(foodStartDate, foodEndDate)) return;
+
+    setExporting("foodLog");
     try {
-      const data = await exportAllData();
-      const rows: string[] = ["table,id,json"];
-      const dump = (table: string, arr: unknown[] | null) => {
-        (arr ?? []).forEach((row) => {
-          const record = isRecord(row) ? row : {};
-          const id = typeof record.id === "string" ? record.id : "";
-          rows.push(`${table},${id},"${JSON.stringify(row).replace(/"/g, '""')}"`);
-        });
-      };
-      dump("products", data.products);
-      dump("meal_templates", data.meal_templates);
-      dump("meal_template_items", data.meal_template_items);
-      dump("daily_logs", data.daily_logs);
-      dump("daily_log_items", data.daily_log_items);
-      dump("weight_logs", data.weight_logs);
-      dump("workout_plans", data.workout_plans);
-      dump("workout_day_plans", data.workout_day_plans);
-      dump("workout_blocks", data.workout_blocks);
-      dump("workout_exercise_plans", data.workout_exercise_plans);
-      dump("workout_session_logs", data.workout_session_logs);
-      dump("workout_exercise_logs", data.workout_exercise_logs);
-      dump("workout_sets", data.workout_sets);
-      downloadFile(`macro-export-${Date.now()}.csv`, rows.join("\n"), "text/csv");
-    } catch (e: unknown) {
-      toast.error(getErrorMessage(e, "Could not export CSV"));
+      const data = await exportFoodLogRange(foodStartDate, foodEndDate);
+      downloadJson(`macrocalm-food-log-${foodStartDate}-to-${foodEndDate}.json`, data);
+      toast.success("Food log export downloaded");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Could not export food log"));
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  async function exportLibrary() {
+    const date = todayString();
+    setExporting("library");
+    try {
+      const data = await exportStoredFoodLibrary();
+      downloadJson(`macrocalm-food-library-${date}.json`, data);
+      toast.success("Food library export downloaded");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Could not export food library"));
+    } finally {
+      setExporting(null);
     }
   }
 
@@ -80,21 +91,47 @@ function SettingsPage() {
       </div>
 
       <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2 ml-1">Data</p>
-      <div className="space-y-2">
-        <button
-          onClick={exportJson}
-          className="w-full rounded-2xl border border-border bg-card p-4 flex items-center gap-3 hover:border-primary/50"
-        >
-          <FileJson className="h-5 w-5 text-primary" />
-          <span className="font-medium">Export as JSON</span>
-        </button>
-        <button
-          onClick={exportCsv}
-          className="w-full rounded-2xl border border-border bg-card p-4 flex items-center gap-3 hover:border-primary/50"
-        >
-          <Download className="h-5 w-5 text-primary" />
-          <span className="font-medium">Export as CSV</span>
-        </button>
+      <div className="space-y-3">
+        <ExportCard
+          title="Export workouts"
+          description="Download logged workout sessions, exercises, and sets for a date range."
+          startDate={workoutStartDate}
+          endDate={workoutEndDate}
+          onStartDateChange={setWorkoutStartDate}
+          onEndDateChange={setWorkoutEndDate}
+          onDownload={exportWorkouts}
+          loading={exporting === "workouts"}
+        />
+        <ExportCard
+          title="Export food log"
+          description="Download logged meals and products for a date range, including quantities and per-100g product nutrition."
+          startDate={foodStartDate}
+          endDate={foodEndDate}
+          onStartDateChange={setFoodStartDate}
+          onEndDateChange={setFoodEndDate}
+          onDownload={exportFoodLog}
+          loading={exporting === "foodLog"}
+        />
+        <section className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-start gap-3">
+            <Download className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <h2 className="font-semibold">Export products & saved meals</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Download all stored products per 100g and saved reusable meals with default
+                quantities.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={exportLibrary}
+            disabled={exporting === "library"}
+            className="mt-4 h-11 w-full rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {exporting === "library" ? "Exporting..." : "Download JSON"}
+          </button>
+        </section>
       </div>
 
       <button
@@ -107,8 +144,70 @@ function SettingsPage() {
   );
 }
 
-function downloadFile(name: string, content: string, mime: string) {
-  const blob = new Blob([content], { type: mime });
+function ExportCard({
+  title,
+  description,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  onDownload,
+  loading,
+}: {
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  onStartDateChange: (value: string) => void;
+  onEndDateChange: (value: string) => void;
+  onDownload: () => void;
+  loading: boolean;
+}) {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-start gap-3">
+        <Download className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold">{title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <label className="grid gap-1.5">
+          <span className="text-xs text-muted-foreground">Start date</span>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(event) => onStartDateChange(event.target.value)}
+            className="h-11 rounded-xl border border-border bg-input px-3 text-sm"
+          />
+        </label>
+        <label className="grid gap-1.5">
+          <span className="text-xs text-muted-foreground">End date</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(event) => onEndDateChange(event.target.value)}
+            className="h-11 rounded-xl border border-border bg-input px-3 text-sm"
+          />
+        </label>
+      </div>
+
+      <button
+        type="button"
+        onClick={onDownload}
+        disabled={loading}
+        className="mt-4 h-11 w-full rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+      >
+        {loading ? "Exporting..." : "Download JSON"}
+      </button>
+    </section>
+  );
+}
+
+function downloadJson(name: string, data: unknown) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -117,6 +216,26 @@ function downloadFile(name: string, content: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+function validateDateRange(startDate: string, endDate: string) {
+  if (!startDate || !endDate) {
+    toast.error("Choose a start and end date");
+    return false;
+  }
+
+  if (startDate > endDate) {
+    toast.error("Start date must be before or equal to end date");
+    return false;
+  }
+
+  return true;
+}
+
+function todayString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function daysAgo(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().slice(0, 10);
 }
