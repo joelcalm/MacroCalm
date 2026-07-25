@@ -54,7 +54,10 @@ export type DailyLogItem = {
   product_id: string;
   quantity_g: number;
   meal_template_id: string | null;
+  meal_instance_id: string | null;
   meal_name: string | null;
+  created_at: string;
+  updated_at: string;
   product?: Product;
 };
 
@@ -376,6 +379,7 @@ export async function addDailyLogItem(input: {
   product_id: string;
   quantity_g: number;
   meal_template_id?: string | null;
+  meal_instance_id?: string | null;
   meal_name?: string | null;
 }) {
   const log = await getOrCreateDailyLog(input.date);
@@ -384,6 +388,7 @@ export async function addDailyLogItem(input: {
     product_id: input.product_id,
     quantity_g: input.quantity_g,
     meal_template_id: input.meal_template_id ?? null,
+    meal_instance_id: input.meal_instance_id ?? null,
     meal_name: input.meal_name ?? null,
   });
   if (error) throw error;
@@ -397,11 +402,13 @@ export async function addMealTemplateToLog(
   const tpl = await getMealTemplate(templateId);
   if (!tpl) throw new Error("Template not found");
   const log = await getOrCreateDailyLog(date);
+  const mealInstanceId = crypto.randomUUID();
   const rows = overrides.map((o) => ({
     daily_log_id: log.id,
     product_id: o.product_id,
     quantity_g: o.quantity_g,
     meal_template_id: templateId,
+    meal_instance_id: mealInstanceId,
     meal_name: tpl.template.name,
   }));
   const { error } = await supabase.from("daily_log_items").insert(rows);

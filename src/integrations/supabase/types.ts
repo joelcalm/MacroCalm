@@ -13,6 +13,7 @@ export type Database = {
           created_at: string;
           daily_log_id: string;
           id: string;
+          meal_instance_id: string | null;
           meal_name: string | null;
           meal_template_id: string | null;
           product_id: string;
@@ -23,6 +24,7 @@ export type Database = {
           created_at?: string;
           daily_log_id: string;
           id?: string;
+          meal_instance_id?: string | null;
           meal_name?: string | null;
           meal_template_id?: string | null;
           product_id: string;
@@ -33,6 +35,7 @@ export type Database = {
           created_at?: string;
           daily_log_id?: string;
           id?: string;
+          meal_instance_id?: string | null;
           meal_name?: string | null;
           meal_template_id?: string | null;
           product_id?: string;

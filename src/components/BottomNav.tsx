@@ -12,11 +12,11 @@ const tabs = [
 export function BottomNav() {
   const loc = useLocation();
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 safe-bottom">
-      <div className="mx-auto max-w-md px-3 pb-2">
-        <div className="rounded-2xl border border-border bg-card/90 backdrop-blur-xl shadow-card grid grid-cols-5">
+    <nav className="bottom-nav-safe fixed inset-x-0 bottom-0 z-40">
+      <div className="mx-auto h-[var(--bottom-nav-height)] max-w-md px-3 pb-2">
+        <div className="grid h-full grid-cols-5 rounded-2xl border border-border bg-card/90 shadow-card backdrop-blur-xl">
           {tabs.map((t) => {
-            const active = loc.pathname === t.to || (t.to !== "/" && loc.pathname.startsWith(t.to));
+            const active = loc.pathname === t.to || loc.pathname.startsWith(`${t.to}/`);
             const Icon = t.icon;
             return (
               <Link

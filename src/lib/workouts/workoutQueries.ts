@@ -232,7 +232,7 @@ export async function saveWorkoutSession(input: SaveWorkoutSessionInput) {
       actual_variation: summary.actualVariation,
       completed_set_count: summary.completedSetCount,
       set_checklist: summary.setChecklist as Json,
-      notes: emptyToNull(log.notes),
+      notes: preserveTextOrNull(log.notes),
     };
   });
 
@@ -391,6 +391,7 @@ export function calculateExerciseStatus({
   actualName,
   changeReason,
   explicitlySkipped,
+  note,
   target,
 }: {
   sets: Array<
@@ -404,13 +405,16 @@ export function calculateExerciseStatus({
   actualName?: string | null;
   changeReason?: WorkoutChangeReason | null;
   explicitlySkipped?: boolean;
+  note?: string | null;
   target: WorkoutTarget;
 }): WorkoutExerciseStatus {
   const performedSets = sets.filter(hasActualWork);
   const skippedSets = sets.filter((set) => set.skipped);
   const substituted = Boolean(actualName?.trim() && actualName.trim() !== plannedName.trim());
+  const hasNote = Boolean(note?.trim());
 
   if (substituted) return "substituted";
+  if (hasNote) return "completed";
   if (explicitlySkipped && performedSets.length === 0) return "skipped";
   if (performedSets.length === 0) return "not_started";
   if (plannedSetCount && performedSets.length > plannedSetCount) return "overperformed";
@@ -440,7 +444,9 @@ export function calculateSessionStatus(statuses: WorkoutExerciseStatus[]): Worko
   ) {
     return "modified";
   }
-  if (statuses.every((status) => status === "completed_as_planned")) return "completed";
+  if (statuses.every((status) => status === "completed" || status === "completed_as_planned")) {
+    return "completed";
+  }
   return "in_progress";
 }
 
@@ -697,4 +703,8 @@ function formatNumber(value: number) {
 function emptyToNull(value: string | null | undefined) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+}
+
+function preserveTextOrNull(value: string | null | undefined) {
+  return value?.length ? value : null;
 }

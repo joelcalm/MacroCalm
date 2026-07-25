@@ -422,149 +422,160 @@ function WorkoutPage() {
           <p className="text-sm text-muted-foreground">No workout plan found for this day.</p>
         </div>
       ) : (
-        <div className="mt-4 space-y-4 pb-28">
-          <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  {selectedDay.day_of_week} · {selectedDay.category}
-                </p>
-                <h2 className="mt-1 font-display text-xl font-semibold">{selectedDay.title}</h2>
-                {selectedDay.cap_text && (
-                  <p className="mt-1 text-sm text-muted-foreground">{selectedDay.cap_text}</p>
-                )}
+        <>
+          <div className="workout-scroll-content mt-4 space-y-4">
+            <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    {selectedDay.day_of_week} · {selectedDay.category}
+                  </p>
+                  <h2 className="mt-1 font-display text-xl font-semibold">{selectedDay.title}</h2>
+                  {selectedDay.cap_text && (
+                    <p className="mt-1 text-sm text-muted-foreground">{selectedDay.cap_text}</p>
+                  )}
+                </div>
+                <StatusBadge status={sessionDraft.statusOverride || calculatedSessionStatus} />
               </div>
-              <StatusBadge status={sessionDraft.statusOverride || calculatedSessionStatus} />
-            </div>
-            {selectedDay.notes && (
-              <p className="mt-3 text-sm text-muted-foreground">{selectedDay.notes}</p>
-            )}
+              {selectedDay.notes && (
+                <p className="mt-3 text-sm text-muted-foreground">{selectedDay.notes}</p>
+              )}
 
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <NumberField
-                label="Min"
-                value={sessionDraft.durationMinutes}
-                onChange={(durationMinutes) =>
-                  setSessionDraft((prev) => ({ ...prev, durationMinutes }))
-                }
-              />
-              <NumberField
-                label="RPE"
-                value={sessionDraft.rpe}
-                onChange={(rpe) => setSessionDraft((prev) => ({ ...prev, rpe }))}
-              />
-              <NumberField
-                label="Energy"
-                value={sessionDraft.energy}
-                onChange={(energy) => setSessionDraft((prev) => ({ ...prev, energy }))}
-              />
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setSessionDraft((prev) => ({ ...prev, statusOverride: "" }))}
-                className={chipClass(!sessionDraft.statusOverride)}
-              >
-                Auto
-              </button>
-              {outcomeOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() =>
-                    setSessionDraft((prev) => ({ ...prev, statusOverride: option.value }))
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <NumberField
+                  label="Min"
+                  value={sessionDraft.durationMinutes}
+                  onChange={(durationMinutes) =>
+                    setSessionDraft((prev) => ({ ...prev, durationMinutes }))
                   }
-                  className={chipClass(sessionDraft.statusOverride === option.value)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+                />
+                <NumberField
+                  label="RPE"
+                  value={sessionDraft.rpe}
+                  onChange={(rpe) => setSessionDraft((prev) => ({ ...prev, rpe }))}
+                />
+                <NumberField
+                  label="Energy"
+                  value={sessionDraft.energy}
+                  onChange={(energy) => setSessionDraft((prev) => ({ ...prev, energy }))}
+                />
+              </div>
 
-            <div className="mt-3 grid gap-2">
-              {Object.entries(sessionDraft.painFlags).map(([area, value]) => (
-                <div key={area} className="flex items-center justify-between gap-2">
-                  <span className="text-xs capitalize text-muted-foreground">
-                    {area.replace("_", "/")}
-                  </span>
-                  <div className="flex gap-1">
-                    {painOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() =>
-                          setSessionDraft((prev) => ({
-                            ...prev,
-                            painFlags: { ...prev.painFlags, [area]: option.value },
-                          }))
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSessionDraft((prev) => ({ ...prev, statusOverride: "" }))}
+                  className={chipClass(!sessionDraft.statusOverride)}
+                >
+                  Auto
+                </button>
+                {outcomeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      setSessionDraft((prev) => ({ ...prev, statusOverride: option.value }))
+                    }
+                    className={chipClass(sessionDraft.statusOverride === option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3 grid gap-2">
+                {Object.entries(sessionDraft.painFlags).map(([area, value]) => (
+                  <div key={area} className="flex items-center justify-between gap-2">
+                    <span className="text-xs capitalize text-muted-foreground">
+                      {area.replace("_", "/")}
+                    </span>
+                    <div className="flex gap-1">
+                      {painOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() =>
+                            setSessionDraft((prev) => ({
+                              ...prev,
+                              painFlags: { ...prev.painFlags, [area]: option.value },
+                            }))
+                          }
+                          className={smallChipClass(value === option.value)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Textarea
+                value={sessionDraft.notes}
+                onChange={(event) =>
+                  setSessionDraft((prev) => ({ ...prev, notes: event.target.value }))
+                }
+                placeholder="Session note"
+                className="mt-3 min-h-14 rounded-xl bg-input text-sm"
+              />
+            </section>
+
+            {selectedDay.blocks.map((block) => (
+              <section key={block.id}>
+                <div className="mb-2 px-1">
+                  <h3 className="font-display text-base font-semibold">{block.title}</h3>
+                </div>
+                {block.exercises.length === 0 ? (
+                  <div className="rounded-2xl border border-border bg-card p-3.5 text-sm text-muted-foreground shadow-card">
+                    {compactBlockSummary(block.title, block.notes)}
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {block.exercises.map((exercise) => (
+                      <ExerciseCard
+                        key={exercise.id}
+                        exercise={exercise}
+                        type={
+                          exerciseTypes[exercise.id] ??
+                          inferExerciseType(exercise, block.block_type)
                         }
-                        className={smallChipClass(value === option.value)}
-                      >
-                        {option.label}
-                      </button>
+                        draft={exerciseDrafts[exercise.id] ?? buildExerciseDraft(exercise)}
+                        status={exerciseStatuses[exercise.id] ?? "not_started"}
+                        onChange={(nextDraft) =>
+                          setExerciseDrafts((prev) => ({ ...prev, [exercise.id]: nextDraft }))
+                        }
+                        onAddSet={() => openNewSet(exercise)}
+                        onUseTarget={() => addTargetSet(exercise)}
+                        onDuplicateLast={() => duplicateLastSet(exercise)}
+                        onCompleteRemaining={() => completeRemainingAsPlanned(exercise)}
+                        onEditSet={(set) => openEditSet(exercise, set)}
+                        onDeleteSet={(setIndex) => deleteSet(exercise.id, setIndex)}
+                      />
                     ))}
                   </div>
-                </div>
-              ))}
+                )}
+              </section>
+            ))}
+          </div>
+
+          <div className="workout-save-area fixed inset-x-0 z-30">
+            <div className="mx-auto max-w-md px-4">
+              <button
+                type="button"
+                onClick={save}
+                disabled={saving}
+                className="flex h-[var(--workout-action-height)] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary font-semibold text-primary-foreground shadow-glow disabled:opacity-60"
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {saving ? "Saving..." : "Save workout"}
+              </button>
             </div>
-
-            <Textarea
-              value={sessionDraft.notes}
-              onChange={(event) =>
-                setSessionDraft((prev) => ({ ...prev, notes: event.target.value }))
-              }
-              placeholder="Session note"
-              className="mt-3 min-h-14 rounded-xl bg-input text-sm"
-            />
-          </section>
-
-          {selectedDay.blocks.map((block) => (
-            <section key={block.id}>
-              <div className="mb-2 px-1">
-                <h3 className="font-display text-base font-semibold">{block.title}</h3>
-              </div>
-              {block.exercises.length === 0 ? (
-                <div className="rounded-2xl border border-border bg-card p-3.5 text-sm text-muted-foreground shadow-card">
-                  {compactBlockSummary(block.title, block.notes)}
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {block.exercises.map((exercise) => (
-                    <ExerciseCard
-                      key={exercise.id}
-                      exercise={exercise}
-                      type={
-                        exerciseTypes[exercise.id] ?? inferExerciseType(exercise, block.block_type)
-                      }
-                      draft={exerciseDrafts[exercise.id] ?? buildExerciseDraft(exercise)}
-                      status={exerciseStatuses[exercise.id] ?? "not_started"}
-                      onChange={(nextDraft) =>
-                        setExerciseDrafts((prev) => ({ ...prev, [exercise.id]: nextDraft }))
-                      }
-                      onAddSet={() => openNewSet(exercise)}
-                      onUseTarget={() => addTargetSet(exercise)}
-                      onDuplicateLast={() => duplicateLastSet(exercise)}
-                      onCompleteRemaining={() => completeRemainingAsPlanned(exercise)}
-                      onEditSet={(set) => openEditSet(exercise, set)}
-                      onDeleteSet={(setIndex) => deleteSet(exercise.id, setIndex)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          ))}
-
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="sticky bottom-24 z-10 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary font-semibold text-primary-foreground shadow-glow disabled:opacity-60"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {saving ? "Saving..." : "Save workout"}
-          </button>
-        </div>
+          </div>
+        </>
       )}
 
       <SetEditorDrawer
@@ -647,94 +658,131 @@ function ExerciseCard({
   onEditSet: (set: SetDraft) => void;
   onDeleteSet: (setIndex: number) => void;
 }) {
-  const plannedSetCount = parseExactSetCount(exercise.planned_sets);
   const performedSets = draft.sets.filter(setHasActualWork);
   const actualSummary = buildActualSummary(draft.sets, type);
 
   return (
     <article className="rounded-2xl border border-border bg-card p-3.5 shadow-card">
       <div className="flex items-start justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => onChange({ ...draft, expanded: !draft.expanded })}
-          className="min-w-0 flex-1 text-left"
-        >
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-              <h4 className="font-semibold leading-tight">{exercise.name}</h4>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Target: {targetText(exercise)}
-                {exercise.planned_rest ? ` · Rest ${exercise.planned_rest}` : ""}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Actual:{" "}
-                {actualSummary || `${performedSets.length}/${plannedSetCount ?? "?"} sets logged`}
-              </p>
-            </div>
-            {draft.expanded ? (
-              <ChevronUp className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
-          </div>
-        </button>
+        <div className="min-w-0 flex-1">
+          <h4 className="font-semibold leading-tight">{exercise.name}</h4>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Target: {targetText(exercise)}
+            {exercise.planned_rest ? ` · Rest ${exercise.planned_rest}` : ""}
+          </p>
+        </div>
         <StatusBadge status={status} />
       </div>
 
-      <div className="mt-3 grid grid-cols-4 gap-1.5">
-        <Button type="button" size="sm" onClick={onAddSet} className="px-2">
-          <Plus className="h-4 w-4" />
-          Set
-        </Button>
-        <Button type="button" size="sm" variant="secondary" onClick={onUseTarget} className="px-2">
-          <Activity className="h-4 w-4" />
-          Target
-        </Button>
+      <Textarea
+        rows={2}
+        value={draft.notes}
+        onChange={(event) =>
+          onChange({
+            ...draft,
+            notes: event.target.value,
+            explicitlySkipped: event.target.value.length > 0 ? false : draft.explicitlySkipped,
+          })
+        }
+        aria-label={`Performance note for ${exercise.name}`}
+        placeholder="Write or dictate what you did…"
+        className="mt-3 min-h-12 max-h-40 resize-none overflow-y-auto rounded-xl bg-input text-sm [field-sizing:content]"
+      />
+
+      <div className="mt-2 flex items-center justify-between gap-2">
         <Button
           type="button"
           size="sm"
           variant="secondary"
-          onClick={() =>
-            onChange({
-              ...draft,
-              expanded: true,
-              isSwapping: true,
-              actualName: draft.actualName,
-            })
-          }
-          className="px-2"
+          onClick={() => onChange({ ...draft, expanded: !draft.expanded })}
+          aria-expanded={draft.expanded}
+          aria-controls={`exercise-details-${exercise.id}`}
+          className="h-10 px-3"
         >
-          <RefreshCcw className="h-4 w-4" />
-          Swap
+          Detailed sets{draft.sets.length ? ` (${draft.sets.length})` : ""}
+          {draft.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </Button>
         <Button
           type="button"
           size="sm"
           variant="secondary"
-          onClick={() =>
+          onClick={() => {
+            if (
+              !draft.explicitlySkipped &&
+              (draft.notes.trim() || draft.sets.some(setHasActualWork))
+            ) {
+              toast.info("Clear the note and logged sets before skipping this exercise.");
+              return;
+            }
             onChange({
               ...draft,
               explicitlySkipped: !draft.explicitlySkipped,
-              expanded: true,
-              sets: draft.explicitlySkipped ? draft.sets : [],
-            })
-          }
-          className="px-2"
+              expanded: draft.explicitlySkipped ? draft.expanded : false,
+            });
+          }}
+          aria-pressed={draft.explicitlySkipped}
+          className="h-10 px-3"
         >
           <SkipForward className="h-4 w-4" />
-          Skip
+          {draft.explicitlySkipped ? "Unskip" : "Skip"}
         </Button>
       </div>
 
       {draft.expanded && (
-        <div className="mt-3 space-y-3">
+        <div
+          id={`exercise-details-${exercise.id}`}
+          className="mt-3 space-y-3 border-t border-border pt-3"
+        >
+          <div className="grid grid-cols-3 gap-2">
+            <Button type="button" size="sm" onClick={onAddSet} className="h-10 px-2">
+              <Plus className="h-4 w-4" />
+              Add set
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={onUseTarget}
+              className="h-10 px-2"
+            >
+              <Activity className="h-4 w-4" />
+              Target
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() =>
+                onChange({
+                  ...draft,
+                  isSwapping: true,
+                  actualName: draft.actualName,
+                  explicitlySkipped: false,
+                })
+              }
+              className="h-10 px-2"
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Swap
+            </Button>
+          </div>
+
+          {performedSets.length > 0 && (
+            <p className="text-xs text-muted-foreground">Logged sets: {actualSummary}</p>
+          )}
+
           {(draft.isSwapping || draft.actualName) && (
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">Actual exercise</label>
               <Input
                 value={draft.actualName}
                 onChange={(event) =>
-                  onChange({ ...draft, isSwapping: true, actualName: event.target.value })
+                  onChange({
+                    ...draft,
+                    isSwapping: true,
+                    actualName: event.target.value,
+                    explicitlySkipped: false,
+                  })
                 }
                 placeholder={`Instead of ${exercise.name}`}
                 className="rounded-xl bg-input"
@@ -801,13 +849,6 @@ function ExerciseCard({
               Fill remaining
             </Button>
           </div>
-
-          <Textarea
-            value={draft.notes}
-            onChange={(event) => onChange({ ...draft, notes: event.target.value })}
-            placeholder="Exercise note"
-            className="min-h-12 rounded-xl bg-input text-sm"
-          />
         </div>
       )}
     </article>
@@ -1160,7 +1201,7 @@ function buildExerciseDraft(exercise: WorkoutExercisePlanWithLog): ExerciseDraft
     changeReason: log?.change_reason ?? "",
     notes: log?.notes ?? "",
     sets,
-    expanded: sets.length > 0 || Boolean(log?.notes),
+    expanded: false,
     explicitlySkipped: log?.status === "skipped",
   };
 }
@@ -1284,6 +1325,7 @@ function getDraftExerciseStatus(exercise: WorkoutExercisePlanWithLog, draft: Exe
     actualName: draft.actualName,
     changeReason: draft.changeReason || null,
     explicitlySkipped: draft.explicitlySkipped,
+    note: draft.notes,
     target: buildWorkoutTarget(exercise),
   });
 }

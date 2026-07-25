@@ -33,7 +33,7 @@ import {
 } from "@/lib/supabaseQueries";
 import { computeMacros, fmtCal, fmtMacro, sumMacros } from "@/lib/nutrition";
 import { getErrorMessage } from "@/lib/utils";
-import { Apple, Dumbbell, Plus, Scale, Trash2, UtensilsCrossed } from "lucide-react";
+import { Apple, ChevronDown, Dumbbell, Plus, Scale, Trash2, UtensilsCrossed } from "lucide-react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 
@@ -66,6 +66,7 @@ function LogPage() {
   const [weightEditorOpen, setWeightEditorOpen] = useState(false);
   const [savingWeight, setSavingWeight] = useState(false);
   const [workoutSummaries, setWorkoutSummaries] = useState<WorkoutLogSummary[]>([]);
+  const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({});
 
   const [pickedProduct, setPickedProduct] = useState<Product | null>(null);
   const [pickedQty, setPickedQty] = useState(100);
@@ -96,6 +97,7 @@ function LogPage() {
   }, [date]);
 
   useEffect(() => {
+    setExpandedMeals({});
     refresh();
   }, [refresh]);
 
@@ -115,11 +117,7 @@ function LogPage() {
     ),
   );
 
-  const grouped: Record<string, DailyLogItem[]> = {};
-  for (const i of items) {
-    const k = i.meal_name ?? "Individual items";
-    (grouped[k] ??= []).push(i);
-  }
+  const { mealGroups, individualItems } = groupLoggedItems(items);
 
   async function changeQty(item: DailyLogItem, q: number) {
     setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, quantity_g: q } : x)));
@@ -270,6 +268,49 @@ function LogPage() {
         <Plus className="h-4 w-4 text-muted-foreground" />
       </button>
 
+      <div className="mt-6 space-y-4">
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : items.length === 0 ? (
+          <div className="text-center py-10 rounded-2xl border border-dashed border-border">
+            <p className="text-sm text-muted-foreground">Nothing logged for this day.</p>
+          </div>
+        ) : (
+          <>
+            {mealGroups.map((group) => (
+              <LoggedMealCard
+                key={group.key}
+                name={group.name}
+                items={group.items}
+                expanded={Boolean(expandedMeals[group.key])}
+                onToggle={() =>
+                  setExpandedMeals((prev) => ({ ...prev, [group.key]: !prev[group.key] }))
+                }
+                onChangeQty={changeQty}
+                onRemove={removeItem}
+              />
+            ))}
+            {individualItems.length > 0 && (
+              <section>
+                <h2 className="mb-2 text-sm font-medium">Individual items</h2>
+                <div className="space-y-2">
+                  {individualItems.map((item) => (
+                    <LoggedItemCard
+                      key={item.id}
+                      item={item}
+                      onChangeQty={changeQty}
+                      onRemove={removeItem}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+      </div>
+
+      <WorkoutSummaryCard summaries={workoutSummaries} loading={loading} />
+
       <div className="mt-6 rounded-2xl border border-border bg-card p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -374,56 +415,6 @@ function LogPage() {
             </ChartContainer>
           )}
         </div>
-      </div>
-
-      <WorkoutSummaryCard summaries={workoutSummaries} loading={loading} />
-
-      <div className="mt-6 space-y-4">
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        ) : items.length === 0 ? (
-          <div className="text-center py-10 rounded-2xl border border-dashed border-border">
-            <p className="text-sm text-muted-foreground">Nothing logged for this day.</p>
-          </div>
-        ) : (
-          Object.entries(grouped).map(([groupName, list]) => (
-            <div key={groupName}>
-              <p className="text-sm font-medium mb-2">{groupName}</p>
-              <div className="space-y-2">
-                {list.map((i) => {
-                  const m = i.product ? computeMacros(i.product, i.quantity_g) : null;
-                  return (
-                    <div key={i.id} className="rounded-2xl border border-border bg-card p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">{i.product?.name}</p>
-                          {m && (
-                            <p className="text-xs text-muted-foreground">
-                              {fmtCal(m.calories)} kcal · P {fmtMacro(m.protein)} · C{" "}
-                              {fmtMacro(m.carbs)} · F {fmtMacro(m.fat)}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => removeItem(i.id)}
-                          className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-destructive"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <div className="mt-2">
-                        <QuantityInput
-                          value={Number(i.quantity_g)}
-                          onChange={(v) => changeQty(i, v)}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))
-        )}
       </div>
 
       {/* Add product picker */}
@@ -540,6 +531,148 @@ function LogPage() {
         </div>
       </Sheet>
     </AppShell>
+  );
+}
+
+type LoggedMealGroup = {
+  key: string;
+  name: string;
+  items: DailyLogItem[];
+};
+
+function groupLoggedItems(items: DailyLogItem[]) {
+  const groups = new Map<string, LoggedMealGroup>();
+  const individualItems: DailyLogItem[] = [];
+
+  for (const item of items) {
+    if (!item.meal_name) {
+      individualItems.push(item);
+      continue;
+    }
+
+    // New logs have an explicit instance id. Older bulk inserts share a created_at
+    // timestamp, which keeps separately logged legacy copies independent where possible.
+    const key = item.meal_instance_id
+      ? `instance:${item.meal_instance_id}`
+      : `legacy:${item.meal_template_id ?? item.meal_name}:${item.created_at}`;
+    const group = groups.get(key);
+    if (group) {
+      group.items.push(item);
+    } else {
+      groups.set(key, { key, name: item.meal_name, items: [item] });
+    }
+  }
+
+  return { mealGroups: Array.from(groups.values()), individualItems };
+}
+
+function LoggedMealCard({
+  name,
+  items,
+  expanded,
+  onToggle,
+  onChangeQty,
+  onRemove,
+}: {
+  name: string;
+  items: DailyLogItem[];
+  expanded: boolean;
+  onToggle: () => void;
+  onChangeQty: (item: DailyLogItem, quantity: number) => void;
+  onRemove: (id: string) => void;
+}) {
+  const totals = sumMacros(
+    items.map((item) =>
+      item.product
+        ? computeMacros(item.product, item.quantity_g)
+        : { calories: 0, protein: 0, carbs: 0, fat: 0 },
+    ),
+  );
+  const detailsId = `logged-meal-${items[0]?.id ?? "details"}`;
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-controls={detailsId}
+        aria-label={`${expanded ? "Collapse" : "Expand"} ${name}`}
+        className="flex min-h-16 w-full items-center gap-3 p-3.5 text-left"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-semibold">{name}</span>
+          <span className="mt-1 block text-xs text-muted-foreground">
+            {fmtCal(totals.calories)} kcal · P {fmtMacro(totals.protein)} · C{" "}
+            {fmtMacro(totals.carbs)} · F {fmtMacro(totals.fat)}
+          </span>
+          <span className="mt-1 block text-xs text-muted-foreground">
+            {items.length} {items.length === 1 ? "ingredient" : "ingredients"}
+          </span>
+        </span>
+        <ChevronDown
+          aria-hidden="true"
+          className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${
+            expanded ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {expanded && (
+        <div id={detailsId} className="space-y-2 border-t border-border p-3">
+          {items.map((item) => (
+            <LoggedItemCard
+              key={item.id}
+              item={item}
+              onChangeQty={onChangeQty}
+              onRemove={onRemove}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function LoggedItemCard({
+  item,
+  onChangeQty,
+  onRemove,
+}: {
+  item: DailyLogItem;
+  onChangeQty: (item: DailyLogItem, quantity: number) => void;
+  onRemove: (id: string) => void;
+}) {
+  const macros = item.product ? computeMacros(item.product, item.quantity_g) : null;
+
+  return (
+    <div className="rounded-xl border border-border bg-secondary/40 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-medium">{item.product?.name}</p>
+          {macros && (
+            <p className="text-xs text-muted-foreground">
+              {fmtCal(macros.calories)} kcal · P {fmtMacro(macros.protein)} · C{" "}
+              {fmtMacro(macros.carbs)} · F {fmtMacro(macros.fat)}
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => onRemove(item.id)}
+          aria-label={`Remove ${item.product?.name ?? "ingredient"}`}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="mt-2">
+        <QuantityInput
+          value={Number(item.quantity_g)}
+          onChange={(quantity) => onChangeQty(item, quantity)}
+        />
+      </div>
+    </div>
   );
 }
 
