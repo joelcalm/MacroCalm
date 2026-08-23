@@ -208,7 +208,8 @@ function stringOrNull(value: unknown) {
 }
 
 function numberOrNull(value: unknown) {
-  const numberValue = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
+  const numberValue =
+    typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
   return Number.isFinite(numberValue) && numberValue >= 0 ? round(numberValue) : null;
 }
 

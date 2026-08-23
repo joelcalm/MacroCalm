@@ -26,7 +26,9 @@ export function QuantityInput({
           onChange={(e) => onChange(Number(e.target.value) || 0)}
           className="h-10 w-24 rounded-xl bg-input text-center font-display text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-ring"
         />
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">g</span>
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+          g
+        </span>
       </div>
       <button
         type="button"

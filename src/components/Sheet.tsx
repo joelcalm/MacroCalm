@@ -28,7 +28,10 @@ export function Sheet({
       <div className="relative w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto safe-bottom animate-in slide-in-from-bottom duration-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg font-bold">{title}</h2>
-          <button onClick={onClose} className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
+          <button
+            onClick={onClose}
+            className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>

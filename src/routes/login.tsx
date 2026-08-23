@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 
@@ -38,8 +39,8 @@ function LoginPage() {
         if (error) throw error;
         nav({ to: "/" });
       }
-    } catch (err: any) {
-      toast.error(err.message ?? "Something went wrong");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     } finally {
       setBusy(false);
     }

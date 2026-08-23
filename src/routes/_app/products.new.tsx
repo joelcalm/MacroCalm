@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
-import { ProductForm, emptyForm, type ProductFormValues } from "@/components/ProductForm";
+import { ProductForm, emptyForm, type ProductFormSubmission } from "@/components/ProductForm";
 import { createProduct } from "@/lib/supabaseQueries";
 import { getErrorMessage } from "@/lib/utils";
 import { extractNutritionFromImage } from "@/lib/vision/extractNutrition.functions";
@@ -75,7 +75,7 @@ function NewProductPage() {
     }
   }
 
-  async function save(values: ProductFormValues, sourceType: "manual" | "photo") {
+  async function save(values: ProductFormSubmission, sourceType: "manual" | "photo") {
     try {
       await createProduct({
         name: values.name.trim(),

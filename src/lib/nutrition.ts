@@ -19,10 +19,10 @@ export const EMPTY_MACROS: Macros = { calories: 0, protein: 0, carbs: 0, fat: 0 
 export function computeMacros(p: MacroPer100g, quantity_g: number): Macros {
   const q = Number(quantity_g) || 0;
   return {
-    calories: (Number(p.calories_per_100g) || 0) * q / 100,
-    protein: (Number(p.protein_per_100g) || 0) * q / 100,
-    carbs: (Number(p.carbs_per_100g) || 0) * q / 100,
-    fat: (Number(p.fat_per_100g) || 0) * q / 100,
+    calories: ((Number(p.calories_per_100g) || 0) * q) / 100,
+    protein: ((Number(p.protein_per_100g) || 0) * q) / 100,
+    carbs: ((Number(p.carbs_per_100g) || 0) * q) / 100,
+    fat: ((Number(p.fat_per_100g) || 0) * q) / 100,
   };
 }
 

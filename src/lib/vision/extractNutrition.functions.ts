@@ -81,33 +81,36 @@ function validateImage(image: { mimeType: string; data: string }) {
 async function generateWithGemini(apiKey: string, image: { mimeType: string; data: string }) {
   for (const model of GEMINI_MODELS) {
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                { text: PROMPT },
-                {
-                  inline_data: {
-                    mime_type: image.mimeType,
-                    data: image.data,
-                  },
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0,
-            response_mime_type: "application/json",
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
           },
-        }),
-      });
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  { text: PROMPT },
+                  {
+                    inline_data: {
+                      mime_type: image.mimeType,
+                      data: image.data,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0,
+              response_mime_type: "application/json",
+            },
+          }),
+        },
+      );
 
       if (res.ok) return res.json();
 
@@ -192,7 +195,8 @@ function stringOrNull(value: unknown) {
 }
 
 function numberOrNull(value: unknown) {
-  const numberValue = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
+  const numberValue =
+    typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
   return Number.isFinite(numberValue) && numberValue >= 0 ? round(numberValue) : null;
 }
 

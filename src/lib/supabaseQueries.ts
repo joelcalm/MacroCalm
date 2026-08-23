@@ -383,14 +383,15 @@ export async function addDailyLogItem(input: {
   meal_name?: string | null;
 }) {
   const log = await getOrCreateDailyLog(input.date);
-  const { error } = await supabase.from("daily_log_items").insert({
+  const row = {
     daily_log_id: log.id,
     product_id: input.product_id,
     quantity_g: input.quantity_g,
     meal_template_id: input.meal_template_id ?? null,
-    meal_instance_id: input.meal_instance_id ?? null,
     meal_name: input.meal_name ?? null,
-  });
+    ...(input.meal_instance_id ? { meal_instance_id: input.meal_instance_id } : {}),
+  };
+  const { error } = await supabase.from("daily_log_items").insert(row);
   if (error) throw error;
 }
 
@@ -398,11 +399,12 @@ export async function addMealTemplateToLog(
   date: string,
   templateId: string,
   overrides: { product_id: string; quantity_g: number }[],
-) {
-  const tpl = await getMealTemplate(templateId);
+): Promise<DailyLogItem[]> {
+  if (!overrides.length) throw new Error("Add at least one product before logging this meal");
+
+  const [tpl, log] = await Promise.all([getMealTemplate(templateId), getOrCreateDailyLog(date)]);
   if (!tpl) throw new Error("Template not found");
-  const log = await getOrCreateDailyLog(date);
-  const mealInstanceId = crypto.randomUUID();
+  const mealInstanceId = createMealInstanceId();
   const rows = overrides.map((o) => ({
     daily_log_id: log.id,
     product_id: o.product_id,
@@ -411,8 +413,45 @@ export async function addMealTemplateToLog(
     meal_instance_id: mealInstanceId,
     meal_name: tpl.template.name,
   }));
-  const { error } = await supabase.from("daily_log_items").insert(rows);
-  if (error) throw error;
+  const { data, error } = await supabase
+    .from("daily_log_items")
+    .insert(rows)
+    .select("*, product:products(*)");
+  if (!error) return (data ?? []) as DailyLogItem[];
+
+  // Older deployed databases may not have the optional grouping column yet.
+  // A multi-row insert still shares one created_at value, so the UI's legacy
+  // grouping path keeps the products together until the migration is applied.
+  if (isMissingMealInstanceColumn(error)) {
+    const legacyRows = rows.map(({ meal_instance_id: _, ...row }) => row);
+    const { data: legacyData, error: legacyError } = await supabase
+      .from("daily_log_items")
+      .insert(legacyRows)
+      .select("*, product:products(*)");
+    if (!legacyError) return (legacyData ?? []) as DailyLogItem[];
+    throw legacyError;
+  }
+
+  throw error;
+}
+
+function createMealInstanceId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+    const random = Math.floor(Math.random() * 16);
+    const value = character === "x" ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
+}
+
+function isMissingMealInstanceColumn(error: { code?: string; message?: string }) {
+  return (
+    (error.code === "PGRST204" || error.code === "42703") &&
+    (error.message ?? "").toLowerCase().includes("meal_instance_id")
+  );
 }
 
 export async function updateDailyLogItem(id: string, quantity_g: number) {

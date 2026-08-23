@@ -206,11 +206,11 @@ export async function exportWorkoutWeekForHermes(
                 .filter((exercise) => exercise.block_id === block.id)
                 .map((exercise) => {
                   const log = sessionLog
-                    ? exerciseLogRows.find(
+                    ? (exerciseLogRows.find(
                         (item) =>
                           item.session_log_id === sessionLog.id &&
                           item.exercise_plan_id === exercise.id,
-                      )
+                      ) ?? null)
                     : null;
                   const sets = log
                     ? setRows.filter((set) => set.session_exercise_log_id === log.id)

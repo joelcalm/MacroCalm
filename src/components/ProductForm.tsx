@@ -19,6 +19,16 @@ export type ProductFormValues = {
   notes: string;
 };
 
+export type ProductFormSubmission = Omit<
+  ProductFormValues,
+  "calories_per_100g" | "protein_per_100g" | "carbs_per_100g" | "fat_per_100g"
+> & {
+  calories_per_100g: number;
+  protein_per_100g: number;
+  carbs_per_100g: number;
+  fat_per_100g: number;
+};
+
 export function emptyForm(): ProductFormValues {
   return {
     name: "",
@@ -54,7 +64,7 @@ export function ProductForm({
   initial?: ProductFormValues;
   imagePreviewUrl?: string | null;
   submitLabel?: string;
-  onSubmit: (v: ProductFormValues) => Promise<void> | void;
+  onSubmit: (v: ProductFormSubmission) => Promise<void> | void;
 }) {
   const [v, setV] = useState<ProductFormValues>(initial ?? emptyForm());
   const [busy, setBusy] = useState(false);
@@ -207,7 +217,7 @@ function NumField({
   );
 }
 
-function normalizeFormValues(v: ProductFormValues): ProductFormValues {
+function normalizeFormValues(v: ProductFormValues): ProductFormSubmission {
   return {
     ...v,
     calories_per_100g: numberOrZero(v.calories_per_100g),

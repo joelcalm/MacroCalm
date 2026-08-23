@@ -26,7 +26,6 @@ import {
   upsertWeightLog,
   type DailyLogItem,
   type MealTemplate,
-  type MealTemplateItem,
   type Product,
   type WeightLog,
   type WorkoutLogSummary,
@@ -41,8 +40,23 @@ export const Route = createFileRoute("/_app/log")({
   component: LogPage,
 });
 
-type AddMode = "none" | "choose" | "product" | "productQty" | "meal" | "mealConfirm";
+type AddMode =
+  | "none"
+  | "choose"
+  | "product"
+  | "productQty"
+  | "meal"
+  | "mealConfirm"
+  | "mealProduct";
 type WeightRangePreset = "week" | "month" | "custom";
+
+type MealLogDraftItem = {
+  id: string;
+  product_id: string;
+  product?: Product;
+  qty: number;
+  addedForToday: boolean;
+};
 
 const weightChartConfig = {
   weight: {
@@ -72,10 +86,11 @@ function LogPage() {
   const [pickedQty, setPickedQty] = useState(100);
 
   const [templates, setTemplates] = useState<MealTemplate[]>([]);
-  const [mealConfirmItems, setMealConfirmItems] = useState<(MealTemplateItem & { qty: number })[]>(
-    [],
-  );
+  const [mealConfirmItems, setMealConfirmItems] = useState<MealLogDraftItem[]>([]);
   const [pickedTemplate, setPickedTemplate] = useState<MealTemplate | null>(null);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [loadingMealDraft, setLoadingMealDraft] = useState(false);
+  const [loggingMeal, setLoggingMeal] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -140,28 +155,84 @@ function LogPage() {
 
   async function openMealPicker() {
     setAddMode("meal");
-    setTemplates(await listMealTemplates());
+    setLoadingTemplates(true);
+    try {
+      setTemplates(await listMealTemplates());
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, "Could not load meals"));
+    } finally {
+      setLoadingTemplates(false);
+    }
   }
 
   async function pickTemplate(tpl: MealTemplate) {
-    const data = await getMealTemplate(tpl.id);
-    if (!data) return;
-    setPickedTemplate(tpl);
-    setMealConfirmItems(data.items.map((i) => ({ ...i, qty: i.default_quantity_g })));
+    setLoadingMealDraft(true);
+    try {
+      const data = await getMealTemplate(tpl.id);
+      if (!data) throw new Error("Meal not found");
+      setPickedTemplate(data.template);
+      setMealConfirmItems(
+        data.items.map((item) => ({
+          id: `template:${item.id}`,
+          product_id: item.product_id,
+          product: item.product,
+          qty: Number(item.default_quantity_g),
+          addedForToday: false,
+        })),
+      );
+      setAddMode("mealConfirm");
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, "Could not load meal"));
+    } finally {
+      setLoadingMealDraft(false);
+    }
+  }
+
+  function addProductToMealDraft(product: Product) {
+    setMealConfirmItems((current) => {
+      if (current.some((item) => item.product_id === product.id)) return current;
+      return [
+        ...current,
+        {
+          id: `extra:${product.id}`,
+          product_id: product.id,
+          product,
+          qty: 100,
+          addedForToday: true,
+        },
+      ];
+    });
     setAddMode("mealConfirm");
   }
 
   async function confirmMeal() {
-    if (!pickedTemplate) return;
-    await addMealTemplateToLog(
-      date,
-      pickedTemplate.id,
-      mealConfirmItems.map((i) => ({ product_id: i.product_id, quantity_g: i.qty })),
-    );
-    setAddMode("none");
-    setPickedTemplate(null);
-    refresh();
-    toast.success("Meal logged");
+    if (!pickedTemplate || loggingMeal) return;
+    const itemsToLog = mealConfirmItems.filter((item) => item.qty > 0);
+    if (!itemsToLog.length) {
+      toast.error("Add at least one product with a quantity above 0 g");
+      return;
+    }
+
+    setLoggingMeal(true);
+    try {
+      const loggedItems = await addMealTemplateToLog(
+        date,
+        pickedTemplate.id,
+        itemsToLog.map((item) => ({
+          product_id: item.product_id,
+          quantity_g: item.qty,
+        })),
+      );
+      setItems((current) => [...current, ...loggedItems]);
+      setAddMode("none");
+      setPickedTemplate(null);
+      setMealConfirmItems([]);
+      toast.success(`${pickedTemplate.name} logged`);
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, "Could not log meal"));
+    } finally {
+      setLoggingMeal(false);
+    }
   }
 
   async function saveSelectedWeight() {
@@ -483,7 +554,9 @@ function LogPage() {
 
       {/* Add meal */}
       <Sheet open={addMode === "meal"} onClose={() => setAddMode("none")} title="Pick meal">
-        {templates.length === 0 ? (
+        {loadingTemplates ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">Loading meals…</p>
+        ) : templates.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">No meals saved yet.</p>
         ) : (
           <div className="space-y-2">
@@ -491,7 +564,8 @@ function LogPage() {
               <button
                 key={t.id}
                 onClick={() => pickTemplate(t)}
-                className="w-full text-left rounded-xl border border-border bg-card p-3 hover:border-primary/50"
+                disabled={loadingMealDraft}
+                className="w-full text-left rounded-xl border border-border bg-card p-3 hover:border-primary/50 disabled:opacity-60"
               >
                 <p className="font-medium">{t.name}</p>
                 {t.description && <p className="text-xs text-muted-foreground">{t.description}</p>}
@@ -508,27 +582,73 @@ function LogPage() {
       >
         <div className="space-y-3">
           <MacroSummaryCard macros={mealConfirmTotals} />
-          {mealConfirmItems.map((it, idx) => (
+          <p className="text-xs text-muted-foreground">
+            Changes here apply only to this log. Your saved meal stays unchanged.
+          </p>
+          {mealConfirmItems.map((it) => (
             <div key={it.id} className="rounded-2xl border border-border bg-card p-3">
-              <p className="font-medium truncate mb-2">{it.product?.name}</p>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{it.product?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {it.addedForToday ? "Added for this log" : "From saved meal"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMealConfirmItems((current) => current.filter((item) => item.id !== it.id))
+                  }
+                  aria-label={`Remove ${it.product?.name ?? "product"} from this log`}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
               <QuantityInput
                 value={it.qty}
                 onChange={(v) =>
                   setMealConfirmItems((prev) =>
-                    prev.map((x, i) => (i === idx ? { ...x, qty: v } : x)),
+                    prev.map((item) => (item.id === it.id ? { ...item, qty: v } : item)),
                   )
                 }
               />
             </div>
           ))}
           <button
-            onClick={confirmMeal}
-            className="w-full h-12 rounded-xl bg-gradient-primary text-primary-foreground font-semibold shadow-glow"
+            type="button"
+            onClick={() => setAddMode("mealProduct")}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/50 text-sm font-medium text-muted-foreground hover:border-primary/50 hover:text-foreground"
           >
-            <Plus className="inline h-4 w-4 mr-1" />
-            Add to log
+            <Plus className="h-4 w-4" />
+            Add another product
+          </button>
+          <button
+            onClick={confirmMeal}
+            disabled={loggingMeal || !mealConfirmItems.some((item) => item.qty > 0)}
+            className="w-full h-12 rounded-xl bg-gradient-primary text-primary-foreground font-semibold shadow-glow disabled:opacity-60"
+          >
+            {loggingMeal ? (
+              "Adding to log…"
+            ) : (
+              <>
+                <Plus className="inline h-4 w-4 mr-1" />
+                Add to log
+              </>
+            )}
           </button>
         </div>
+      </Sheet>
+
+      <Sheet
+        open={addMode === "mealProduct"}
+        onClose={() => setAddMode("mealConfirm")}
+        title={`Add to ${pickedTemplate?.name ?? "meal"}`}
+      >
+        <ProductPicker
+          excludeProductIds={mealConfirmItems.map((item) => item.product_id)}
+          onPick={addProductToMealDraft}
+        />
       </Sheet>
     </AppShell>
   );

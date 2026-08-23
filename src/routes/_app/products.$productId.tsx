@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { ProductForm, fromProduct, type ProductFormValues } from "@/components/ProductForm";
+import { ProductForm, fromProduct, type ProductFormSubmission } from "@/components/ProductForm";
 import { deleteProduct, getProduct, updateProduct, type Product } from "@/lib/supabaseQueries";
 import { getErrorMessage } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
@@ -24,7 +24,7 @@ function ProductDetail() {
     });
   }, [productId]);
 
-  async function save(v: ProductFormValues) {
+  async function save(v: ProductFormSubmission) {
     try {
       const p = await updateProduct(productId, {
         name: v.name.trim(),
