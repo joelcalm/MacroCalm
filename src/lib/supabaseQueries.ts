@@ -157,7 +157,7 @@ async function insertMissingStarterProducts(): Promise<void> {
       brand: STARTER_PRODUCT_BRAND,
       source_type: "manual",
       source_image_url: null,
-      notes: STARTER_PRODUCT_NOTES,
+      notes: p.notes ?? STARTER_PRODUCT_NOTES,
     })),
   );
   if (insertError && insertError.code === "23505") return;
@@ -179,11 +179,7 @@ function dedupeStarterProducts(products: Product[]) {
 }
 
 function isStarterProduct(product: Product) {
-  return (
-    product.brand === STARTER_PRODUCT_BRAND &&
-    product.source_type === "manual" &&
-    product.notes === STARTER_PRODUCT_NOTES
-  );
+  return product.brand === STARTER_PRODUCT_BRAND && product.source_type === "manual";
 }
 
 function starterProductKey(name: string, category: ProductCategory) {

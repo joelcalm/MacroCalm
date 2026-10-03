@@ -7,6 +7,7 @@ export type StarterProduct = {
   protein_per_100g: number;
   carbs_per_100g: number;
   fat_per_100g: number;
+  notes?: string;
 };
 
 export const STARTER_PRODUCTS: StarterProduct[] = [
@@ -329,5 +330,736 @@ export const STARTER_PRODUCTS: StarterProduct[] = [
     protein_per_100g: 0.7,
     carbs_per_100g: 3,
     fat_per_100g: 0.2,
+  },
+  // USDA SR Legacy values; cooked items are plain, without added oil or sauces.
+  {
+    name: "Chicken breast (raw, skinless)",
+    category: "meats",
+    calories_per_100g: 120.0,
+    protein_per_100g: 22.5,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 2.62,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171077/nutrients",
+  },
+  {
+    name: "Chicken breast (roasted, skinless)",
+    category: "meats",
+    calories_per_100g: 165.0,
+    protein_per_100g: 31.02,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 3.57,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171477/nutrients",
+  },
+  {
+    name: "Chicken thigh (raw, skinless)",
+    category: "meats",
+    calories_per_100g: 121.0,
+    protein_per_100g: 19.66,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 4.12,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173627/nutrients",
+  },
+  {
+    name: "Chicken thigh (roasted, skinless)",
+    category: "meats",
+    calories_per_100g: 179.0,
+    protein_per_100g: 24.76,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 8.15,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/172388/nutrients",
+  },
+  {
+    name: "Turkey breast (raw, skinless)",
+    category: "meats",
+    calories_per_100g: 114.0,
+    protein_per_100g: 23.34,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 2.33,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/174515/nutrients",
+  },
+  {
+    name: "Ground beef (raw, 5% fat)",
+    category: "meats",
+    calories_per_100g: 137.0,
+    protein_per_100g: 21.41,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 5.0,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171790/nutrients",
+  },
+  {
+    name: "Ground beef (raw, 10% fat)",
+    category: "meats",
+    calories_per_100g: 176.0,
+    protein_per_100g: 20.0,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 10.0,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/174030/nutrients",
+  },
+  {
+    name: "Pork tenderloin (raw)",
+    category: "meats",
+    calories_per_100g: 109.0,
+    protein_per_100g: 20.95,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 2.17,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/168249/nutrients",
+  },
+  {
+    name: "Pork tenderloin (roasted)",
+    category: "meats",
+    calories_per_100g: 143.0,
+    protein_per_100g: 26.17,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 3.51,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/168250/nutrients",
+  },
+  {
+    name: "Salmon (raw, farmed Atlantic)",
+    category: "seafood",
+    calories_per_100g: 208.0,
+    protein_per_100g: 20.42,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 13.42,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/175167/nutrients",
+  },
+  {
+    name: "Salmon (cooked, farmed Atlantic)",
+    category: "seafood",
+    calories_per_100g: 206.0,
+    protein_per_100g: 22.1,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 12.35,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/175168/nutrients",
+  },
+  {
+    name: "Cod (raw)",
+    category: "seafood",
+    calories_per_100g: 82.0,
+    protein_per_100g: 17.81,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 0.67,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171955/nutrients",
+  },
+  {
+    name: "Cod (cooked)",
+    category: "seafood",
+    calories_per_100g: 105.0,
+    protein_per_100g: 22.83,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 0.86,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171956/nutrients",
+  },
+  {
+    name: "Tuna (canned in water, drained)",
+    category: "seafood",
+    calories_per_100g: 86.0,
+    protein_per_100g: 19.44,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 0.96,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173709/nutrients",
+  },
+  {
+    name: "Shrimp (raw)",
+    category: "seafood",
+    calories_per_100g: 85.0,
+    protein_per_100g: 20.1,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 0.51,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/175179/nutrients",
+  },
+  {
+    name: "Shrimp (cooked)",
+    category: "seafood",
+    calories_per_100g: 99.0,
+    protein_per_100g: 23.98,
+    carbs_per_100g: 0.2,
+    fat_per_100g: 0.28,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/175180/nutrients",
+  },
+  {
+    name: "Lentils (dry)",
+    category: "legumes",
+    calories_per_100g: 352.0,
+    protein_per_100g: 24.63,
+    carbs_per_100g: 63.35,
+    fat_per_100g: 1.06,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/172420/nutrients",
+  },
+  {
+    name: "Lentils (cooked)",
+    category: "legumes",
+    calories_per_100g: 116.0,
+    protein_per_100g: 9.02,
+    carbs_per_100g: 20.13,
+    fat_per_100g: 0.38,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/172421/nutrients",
+  },
+  {
+    name: "Red lentils (dry)",
+    category: "legumes",
+    calories_per_100g: 358.0,
+    protein_per_100g: 23.91,
+    carbs_per_100g: 63.1,
+    fat_per_100g: 2.17,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/174284/nutrients",
+  },
+  {
+    name: "Chickpeas (dry)",
+    category: "legumes",
+    calories_per_100g: 378.0,
+    protein_per_100g: 20.47,
+    carbs_per_100g: 62.95,
+    fat_per_100g: 6.04,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173756/nutrients",
+  },
+  {
+    name: "Chickpeas (cooked)",
+    category: "legumes",
+    calories_per_100g: 164.0,
+    protein_per_100g: 8.86,
+    carbs_per_100g: 27.42,
+    fat_per_100g: 2.59,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173757/nutrients",
+  },
+  {
+    name: "Chickpeas (canned, drained)",
+    category: "legumes",
+    calories_per_100g: 139.0,
+    protein_per_100g: 7.05,
+    carbs_per_100g: 22.53,
+    fat_per_100g: 2.77,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173800/nutrients",
+  },
+  {
+    name: "Black beans (dry)",
+    category: "legumes",
+    calories_per_100g: 341.0,
+    protein_per_100g: 21.6,
+    carbs_per_100g: 62.36,
+    fat_per_100g: 1.42,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173734/nutrients",
+  },
+  {
+    name: "Black beans (cooked)",
+    category: "legumes",
+    calories_per_100g: 132.0,
+    protein_per_100g: 8.86,
+    carbs_per_100g: 23.71,
+    fat_per_100g: 0.54,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173735/nutrients",
+  },
+  {
+    name: "Red kidney beans (dry)",
+    category: "legumes",
+    calories_per_100g: 337.0,
+    protein_per_100g: 22.53,
+    carbs_per_100g: 61.29,
+    fat_per_100g: 1.06,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173744/nutrients",
+  },
+  {
+    name: "Red kidney beans (cooked)",
+    category: "legumes",
+    calories_per_100g: 127.0,
+    protein_per_100g: 8.67,
+    carbs_per_100g: 22.8,
+    fat_per_100g: 0.5,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/175194/nutrients",
+  },
+  {
+    name: "White beans (dry)",
+    category: "legumes",
+    calories_per_100g: 333.0,
+    protein_per_100g: 23.36,
+    carbs_per_100g: 60.27,
+    fat_per_100g: 0.85,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/175202/nutrients",
+  },
+  {
+    name: "White beans (cooked)",
+    category: "legumes",
+    calories_per_100g: 139.0,
+    protein_per_100g: 9.73,
+    carbs_per_100g: 25.09,
+    fat_per_100g: 0.35,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/175203/nutrients",
+  },
+  {
+    name: "Edamame (cooked)",
+    category: "legumes",
+    calories_per_100g: 121.0,
+    protein_per_100g: 11.91,
+    carbs_per_100g: 8.91,
+    fat_per_100g: 5.2,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/168411/nutrients",
+  },
+  {
+    name: "Tofu (firm, calcium-set)",
+    category: "legumes",
+    calories_per_100g: 144.0,
+    protein_per_100g: 17.27,
+    carbs_per_100g: 2.78,
+    fat_per_100g: 8.72,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/172475/nutrients",
+  },
+  {
+    name: "Tempeh (cooked)",
+    category: "legumes",
+    calories_per_100g: 195.0,
+    protein_per_100g: 19.91,
+    carbs_per_100g: 7.62,
+    fat_per_100g: 11.38,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/172467/nutrients",
+  },
+  {
+    name: "White rice (dry)",
+    category: "grains",
+    calories_per_100g: 365.0,
+    protein_per_100g: 7.13,
+    carbs_per_100g: 79.95,
+    fat_per_100g: 0.66,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/169756/nutrients",
+  },
+  {
+    name: "White rice (cooked)",
+    category: "grains",
+    calories_per_100g: 130.0,
+    protein_per_100g: 2.69,
+    carbs_per_100g: 28.17,
+    fat_per_100g: 0.28,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/169757/nutrients",
+  },
+  {
+    name: "Brown rice (dry)",
+    category: "grains",
+    calories_per_100g: 367.0,
+    protein_per_100g: 7.54,
+    carbs_per_100g: 76.25,
+    fat_per_100g: 3.2,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/169703/nutrients",
+  },
+  {
+    name: "Brown rice (cooked)",
+    category: "grains",
+    calories_per_100g: 123.0,
+    protein_per_100g: 2.74,
+    carbs_per_100g: 25.58,
+    fat_per_100g: 0.97,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/169704/nutrients",
+  },
+  {
+    name: "Pasta (dry)",
+    category: "grains",
+    calories_per_100g: 371.0,
+    protein_per_100g: 13.04,
+    carbs_per_100g: 74.67,
+    fat_per_100g: 1.51,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/168927/nutrients",
+  },
+  {
+    name: "Pasta (cooked)",
+    category: "grains",
+    calories_per_100g: 158.0,
+    protein_per_100g: 5.8,
+    carbs_per_100g: 30.86,
+    fat_per_100g: 0.93,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/168928/nutrients",
+  },
+  {
+    name: "Whole wheat pasta (dry)",
+    category: "grains",
+    calories_per_100g: 352.0,
+    protein_per_100g: 13.87,
+    carbs_per_100g: 73.37,
+    fat_per_100g: 2.93,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/169738/nutrients",
+  },
+  {
+    name: "Whole wheat pasta (cooked)",
+    category: "grains",
+    calories_per_100g: 149.0,
+    protein_per_100g: 5.99,
+    carbs_per_100g: 30.07,
+    fat_per_100g: 1.71,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/168910/nutrients",
+  },
+  {
+    name: "Quinoa (dry)",
+    category: "grains",
+    calories_per_100g: 368.0,
+    protein_per_100g: 14.12,
+    carbs_per_100g: 64.16,
+    fat_per_100g: 6.07,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/168874/nutrients",
+  },
+  {
+    name: "Quinoa (cooked)",
+    category: "grains",
+    calories_per_100g: 120.0,
+    protein_per_100g: 4.4,
+    carbs_per_100g: 21.3,
+    fat_per_100g: 1.92,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/168917/nutrients",
+  },
+  {
+    name: "Couscous (dry)",
+    category: "grains",
+    calories_per_100g: 376.0,
+    protein_per_100g: 12.76,
+    carbs_per_100g: 77.43,
+    fat_per_100g: 0.64,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/169699/nutrients",
+  },
+  {
+    name: "Couscous (cooked)",
+    category: "grains",
+    calories_per_100g: 112.0,
+    protein_per_100g: 3.79,
+    carbs_per_100g: 23.22,
+    fat_per_100g: 0.16,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/169700/nutrients",
+  },
+  {
+    name: "Bulgur (dry)",
+    category: "grains",
+    calories_per_100g: 342.0,
+    protein_per_100g: 12.29,
+    carbs_per_100g: 75.87,
+    fat_per_100g: 1.33,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170688/nutrients",
+  },
+  {
+    name: "Bulgur (cooked)",
+    category: "grains",
+    calories_per_100g: 83.0,
+    protein_per_100g: 3.08,
+    carbs_per_100g: 18.58,
+    fat_per_100g: 0.24,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170287/nutrients",
+  },
+  {
+    name: "Rolled oats (dry)",
+    category: "grains",
+    calories_per_100g: 379.0,
+    protein_per_100g: 13.15,
+    carbs_per_100g: 67.7,
+    fat_per_100g: 6.52,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173904/nutrients",
+  },
+  {
+    name: "Whole wheat bread",
+    category: "grains",
+    calories_per_100g: 252.0,
+    protein_per_100g: 12.45,
+    carbs_per_100g: 42.71,
+    fat_per_100g: 3.5,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/172688/nutrients",
+  },
+  {
+    name: "White bread",
+    category: "grains",
+    calories_per_100g: 266.0,
+    protein_per_100g: 8.85,
+    carbs_per_100g: 49.42,
+    fat_per_100g: 3.33,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/174924/nutrients",
+  },
+  {
+    name: "Whole egg (raw)",
+    category: "eggs",
+    calories_per_100g: 143.0,
+    protein_per_100g: 12.56,
+    carbs_per_100g: 0.72,
+    fat_per_100g: 9.51,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171287/nutrients",
+  },
+  {
+    name: "Egg whites (raw)",
+    category: "eggs",
+    calories_per_100g: 52.0,
+    protein_per_100g: 10.9,
+    carbs_per_100g: 0.73,
+    fat_per_100g: 0.17,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/172183/nutrients",
+  },
+  {
+    name: "Whole egg (hard boiled)",
+    category: "eggs",
+    calories_per_100g: 155.0,
+    protein_per_100g: 12.58,
+    carbs_per_100g: 1.12,
+    fat_per_100g: 10.61,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173424/nutrients",
+  },
+  {
+    name: "Whole milk",
+    category: "dairy",
+    calories_per_100g: 61.0,
+    protein_per_100g: 3.15,
+    carbs_per_100g: 4.8,
+    fat_per_100g: 3.25,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171265/nutrients",
+  },
+  {
+    name: "Milk (2% fat)",
+    category: "dairy",
+    calories_per_100g: 50.0,
+    protein_per_100g: 3.3,
+    carbs_per_100g: 4.8,
+    fat_per_100g: 1.98,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171267/nutrients",
+  },
+  {
+    name: "Skim milk",
+    category: "dairy",
+    calories_per_100g: 34.0,
+    protein_per_100g: 3.37,
+    carbs_per_100g: 4.96,
+    fat_per_100g: 0.08,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171269/nutrients",
+  },
+  {
+    name: "Plain yogurt (whole milk)",
+    category: "dairy",
+    calories_per_100g: 61.0,
+    protein_per_100g: 3.47,
+    carbs_per_100g: 4.66,
+    fat_per_100g: 3.25,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171284/nutrients",
+  },
+  {
+    name: "Greek yogurt (plain, nonfat)",
+    category: "dairy",
+    calories_per_100g: 59.0,
+    protein_per_100g: 10.19,
+    carbs_per_100g: 3.6,
+    fat_per_100g: 0.39,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170894/nutrients",
+  },
+  {
+    name: "Greek yogurt (plain, whole milk)",
+    category: "dairy",
+    calories_per_100g: 97.0,
+    protein_per_100g: 9.0,
+    carbs_per_100g: 3.98,
+    fat_per_100g: 5.0,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171304/nutrients",
+  },
+  {
+    name: "Cottage cheese (2% fat)",
+    category: "dairy",
+    calories_per_100g: 81.0,
+    protein_per_100g: 10.45,
+    carbs_per_100g: 4.76,
+    fat_per_100g: 2.27,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/172182/nutrients",
+  },
+  {
+    name: "Mozzarella (whole milk)",
+    category: "dairy",
+    calories_per_100g: 299.0,
+    protein_per_100g: 22.17,
+    carbs_per_100g: 2.4,
+    fat_per_100g: 22.14,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170845/nutrients",
+  },
+  {
+    name: "Cheddar",
+    category: "dairy",
+    calories_per_100g: 403.0,
+    protein_per_100g: 22.87,
+    carbs_per_100g: 3.37,
+    fat_per_100g: 33.31,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173414/nutrients",
+  },
+  {
+    name: "Parmesan",
+    category: "dairy",
+    calories_per_100g: 392.0,
+    protein_per_100g: 35.75,
+    carbs_per_100g: 3.22,
+    fat_per_100g: 25.0,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170848/nutrients",
+  },
+  {
+    name: "Almonds (raw)",
+    category: "nuts_seeds",
+    calories_per_100g: 579.0,
+    protein_per_100g: 21.15,
+    carbs_per_100g: 21.55,
+    fat_per_100g: 49.93,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170567/nutrients",
+  },
+  {
+    name: "Walnuts (raw)",
+    category: "nuts_seeds",
+    calories_per_100g: 654.0,
+    protein_per_100g: 15.23,
+    carbs_per_100g: 13.71,
+    fat_per_100g: 65.21,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170187/nutrients",
+  },
+  {
+    name: "Cashews (raw)",
+    category: "nuts_seeds",
+    calories_per_100g: 553.0,
+    protein_per_100g: 18.22,
+    carbs_per_100g: 30.19,
+    fat_per_100g: 43.85,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170162/nutrients",
+  },
+  {
+    name: "Chia seeds (dried)",
+    category: "nuts_seeds",
+    calories_per_100g: 486.0,
+    protein_per_100g: 16.54,
+    carbs_per_100g: 42.12,
+    fat_per_100g: 30.74,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170554/nutrients",
+  },
+  {
+    name: "Flaxseed",
+    category: "nuts_seeds",
+    calories_per_100g: 534.0,
+    protein_per_100g: 18.29,
+    carbs_per_100g: 28.88,
+    fat_per_100g: 42.16,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/169414/nutrients",
+  },
+  {
+    name: "Pumpkin seeds (dried, shelled)",
+    category: "nuts_seeds",
+    calories_per_100g: 559.0,
+    protein_per_100g: 30.23,
+    carbs_per_100g: 10.71,
+    fat_per_100g: 49.05,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170556/nutrients",
+  },
+  {
+    name: "Sunflower seeds (dried, shelled)",
+    category: "nuts_seeds",
+    calories_per_100g: 584.0,
+    protein_per_100g: 20.78,
+    carbs_per_100g: 20.0,
+    fat_per_100g: 51.46,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/170562/nutrients",
+  },
+  {
+    name: "Peanut butter (smooth, unsalted)",
+    category: "nuts_seeds",
+    calories_per_100g: 598.0,
+    protein_per_100g: 22.21,
+    carbs_per_100g: 22.31,
+    fat_per_100g: 51.36,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/172470/nutrients",
+  },
+  {
+    name: "Olive oil",
+    category: "oils_fats",
+    calories_per_100g: 884.0,
+    protein_per_100g: 0.0,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 100.0,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171413/nutrients",
+  },
+  {
+    name: "Sunflower oil",
+    category: "oils_fats",
+    calories_per_100g: 884.0,
+    protein_per_100g: 0.0,
+    carbs_per_100g: 0.0,
+    fat_per_100g: 100.0,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/171025/nutrients",
+  },
+  {
+    name: "Butter (salted)",
+    category: "oils_fats",
+    calories_per_100g: 717.0,
+    protein_per_100g: 0.85,
+    carbs_per_100g: 0.06,
+    fat_per_100g: 81.11,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/173410/nutrients",
+  },
+  {
+    name: "Nectarine",
+    category: "fruits",
+    calories_per_100g: 44.0,
+    protein_per_100g: 1.06,
+    carbs_per_100g: 10.55,
+    fat_per_100g: 0.32,
+    notes:
+      "Generic nutrition per 100 g of edible food in the stated preparation. USDA FoodData Central (SR Legacy): https://fdc.nal.usda.gov/food-details/169914/nutrients",
   },
 ];

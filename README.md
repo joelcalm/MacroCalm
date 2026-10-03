@@ -9,6 +9,22 @@ I did not want to pay for meal tracking apps, so I made one. It is more limited 
 - Save meal templates for quick logging
 - Track body weight over time
 
+The food catalog includes 113 common foods in English, with categories for meat and
+poultry, seafood, legumes and soy, grains/rice/pasta, eggs, dairy, nuts and seeds,
+oils and fats, fruit, and vegetables. Rice, pasta, legumes, and several meats have
+separate dry/raw and cooked entries. Always choose the entry matching how you
+weighed the food. Values are per 100 g of edible food; cooked staples are plain,
+without added oil or sauces.
+
+New entries use [USDA FoodData Central SR Legacy](https://fdc.nal.usda.gov/download-datasets/)
+values, with the individual source linked in each product's notes. Generic values
+can differ from a specific brand's label. Existing custom products and their
+nutrition values are preserved. The food catalog migration translates known
+Spanish product names and updates their categories in place, retaining IDs and
+meal references. New accounts receive the catalog when opening products or a food picker.
+
+Run `npm run test:foods` to check the catalog and its migration data.
+
 ## Stack
 
 - TanStack Start + React
@@ -17,17 +33,17 @@ I did not want to pay for meal tracking apps, so I made one. It is more limited 
 
 ## Setup
 
-1) Install dependencies
+1. Install dependencies
 
 ```bash
 npm install
 ```
 
-2) Create a Supabase project
+2. Create a Supabase project
 
 - Enable email auth (or whichever auth provider you want).
 
-3) Set environment variables
+3. Set environment variables
 
 Create a local `.env` file in the project root:
 
@@ -50,7 +66,7 @@ Notes:
 - The service role key is only needed for trusted server-side admin tasks. Never expose it to the client.
 - The Gemini key is optional. If missing, the label extraction flow will be unavailable.
 
-4) Apply database migrations
+4. Apply database migrations
 
 Use the Supabase CLI (recommended):
 
@@ -62,7 +78,7 @@ supabase db push
 
 Or run the SQL files in [supabase/migrations](supabase/migrations) in the Supabase SQL editor.
 
-5) Run the app
+5. Run the app
 
 ```bash
 npm run dev

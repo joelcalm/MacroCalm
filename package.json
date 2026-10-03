@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test:workout-review": "node --test scripts/workouts/*.test.mjs",
+    "test:foods": "node --test scripts/foods/*.test.mjs",
     "workout:review": "node scripts/workouts/run-weekly-review.mjs"
   },
   "dependencies": {
